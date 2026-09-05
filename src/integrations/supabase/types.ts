@@ -14,7 +14,214 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      applications: {
+        Row: {
+          created_at: string
+          id: string
+          job_id: string
+          message: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          job_id: string
+          message?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          job_id?: string
+          message?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "applications_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cvs: {
+        Row: {
+          created_at: string
+          data: Json
+          id: string
+          template: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data?: Json
+          id?: string
+          template?: string
+          title?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data?: Json
+          id?: string
+          template?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      jobs: {
+        Row: {
+          apply_email: string | null
+          apply_url: string | null
+          category: string
+          company: string
+          created_at: string
+          description: string
+          employment_type: string
+          expires_at: string | null
+          id: string
+          is_featured: boolean
+          is_published: boolean
+          province: string
+          requirements: string | null
+          salary_range: string | null
+          slug: string
+          title: string
+          views: number
+        }
+        Insert: {
+          apply_email?: string | null
+          apply_url?: string | null
+          category: string
+          company: string
+          created_at?: string
+          description: string
+          employment_type?: string
+          expires_at?: string | null
+          id?: string
+          is_featured?: boolean
+          is_published?: boolean
+          province: string
+          requirements?: string | null
+          salary_range?: string | null
+          slug: string
+          title: string
+          views?: number
+        }
+        Update: {
+          apply_email?: string | null
+          apply_url?: string | null
+          category?: string
+          company?: string
+          created_at?: string
+          description?: string
+          employment_type?: string
+          expires_at?: string | null
+          id?: string
+          is_featured?: boolean
+          is_published?: boolean
+          province?: string
+          requirements?: string | null
+          salary_range?: string | null
+          slug?: string
+          title?: string
+          views?: number
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          full_name: string | null
+          id: string
+          phone: string | null
+          province: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          full_name?: string | null
+          id: string
+          phone?: string | null
+          province?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          phone?: string | null
+          province?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      purchases: {
+        Row: {
+          amount: number
+          charge_id: string | null
+          created_at: string
+          currency: string
+          cv_id: string | null
+          id: string
+          method: string
+          msisdn: string | null
+          paid_at: string | null
+          provider_payload: Json | null
+          reference: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          charge_id?: string | null
+          created_at?: string
+          currency?: string
+          cv_id?: string | null
+          id?: string
+          method: string
+          msisdn?: string | null
+          paid_at?: string | null
+          provider_payload?: Json | null
+          reference: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          charge_id?: string | null
+          created_at?: string
+          currency?: string
+          cv_id?: string | null
+          id?: string
+          method?: string
+          msisdn?: string | null
+          paid_at?: string | null
+          provider_payload?: Json | null
+          reference?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchases_cv_id_fkey"
+            columns: ["cv_id"]
+            isOneToOne: false
+            referencedRelation: "cvs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
