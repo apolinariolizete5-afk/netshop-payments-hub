@@ -57,11 +57,11 @@ export async function ping(): Promise<{ ok: boolean; body: unknown }> {
 export async function createCharge(input: {
   amount: number;
   method: string;
-  msisdn?: string;
+  msisdn?: string | undefined;
   reference: string;
-  returnUrl?: string;
-  customerEmail?: string;
-  metadata?: Record<string, unknown>;
+  returnUrl?: string | undefined;
+  customerEmail?: string | undefined;
+  metadata?: Record<string, unknown> | undefined;
   idempotencyKey: string;
 }): Promise<{ ok: boolean; status: number; charge: NetshopCharge }> {
   const body: Record<string, unknown> = {
