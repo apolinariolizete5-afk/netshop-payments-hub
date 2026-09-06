@@ -10,33 +10,115 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as CriarCvRouteImport } from './routes/criar-cv'
+import { Route as PerfilRouteImport } from './routes/perfil'
+import { Route as PesquisarRouteImport } from './routes/pesquisar'
+import { Route as VagasIndexRouteImport } from './routes/vagas.index'
+import { Route as VagasSlugRouteImport } from './routes/vagas.$slug'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CriarCvRoute = CriarCvRouteImport.update({
+  id: '/criar-cv',
+  path: '/criar-cv',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PerfilRoute = PerfilRouteImport.update({
+  id: '/perfil',
+  path: '/perfil',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PesquisarRoute = PesquisarRouteImport.update({
+  id: '/pesquisar',
+  path: '/pesquisar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VagasIndexRoute = VagasIndexRouteImport.update({
+  id: '/vagas/',
+  path: '/vagas/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VagasSlugRoute = VagasSlugRouteImport.update({
+  id: '/vagas/$slug',
+  path: '/vagas/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/criar-cv': typeof CriarCvRoute
+  '/perfil': typeof PerfilRoute
+  '/pesquisar': typeof PesquisarRoute
+  '/vagas/$slug': typeof VagasSlugRoute
+  '/vagas/': typeof VagasIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/criar-cv': typeof CriarCvRoute
+  '/perfil': typeof PerfilRoute
+  '/pesquisar': typeof PesquisarRoute
+  '/vagas/$slug': typeof VagasSlugRoute
+  '/vagas': typeof VagasIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/criar-cv': typeof CriarCvRoute
+  '/perfil': typeof PerfilRoute
+  '/pesquisar': typeof PesquisarRoute
+  '/vagas/$slug': typeof VagasSlugRoute
+  '/vagas/': typeof VagasIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/criar-cv'
+    | '/perfil'
+    | '/pesquisar'
+    | '/vagas/$slug'
+    | '/vagas/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/auth'
+    | '/criar-cv'
+    | '/perfil'
+    | '/pesquisar'
+    | '/vagas/$slug'
+    | '/vagas'
+  id:
+    | '__root__'
+    | '/'
+    | '/auth'
+    | '/criar-cv'
+    | '/perfil'
+    | '/pesquisar'
+    | '/vagas/$slug'
+    | '/vagas/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthRoute: typeof AuthRoute
+  CriarCvRoute: typeof CriarCvRoute
+  PerfilRoute: typeof PerfilRoute
+  PesquisarRoute: typeof PesquisarRoute
+  VagasSlugRoute: typeof VagasSlugRoute
+  VagasIndexRoute: typeof VagasIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +130,59 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/criar-cv': {
+      id: '/criar-cv'
+      path: '/criar-cv'
+      fullPath: '/criar-cv'
+      preLoaderRoute: typeof CriarCvRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/perfil': {
+      id: '/perfil'
+      path: '/perfil'
+      fullPath: '/perfil'
+      preLoaderRoute: typeof PerfilRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pesquisar': {
+      id: '/pesquisar'
+      path: '/pesquisar'
+      fullPath: '/pesquisar'
+      preLoaderRoute: typeof PesquisarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/vagas/': {
+      id: '/vagas/'
+      path: '/vagas'
+      fullPath: '/vagas/'
+      preLoaderRoute: typeof VagasIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/vagas/$slug': {
+      id: '/vagas/$slug'
+      path: '/vagas/$slug'
+      fullPath: '/vagas/$slug'
+      preLoaderRoute: typeof VagasSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthRoute: AuthRoute,
+  CriarCvRoute: CriarCvRoute,
+  PerfilRoute: PerfilRoute,
+  PesquisarRoute: PesquisarRoute,
+  VagasSlugRoute: VagasSlugRoute,
+  VagasIndexRoute: VagasIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
