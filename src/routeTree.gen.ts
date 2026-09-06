@@ -10,11 +10,18 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as PesquisarRouteImport } from './routes/pesquisar'
 import { Route as VagasIndexRouteImport } from './routes/vagas.index'
+import { Route as VagasSlugRouteImport } from './routes/vagas.$slug'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PesquisarRoute = PesquisarRouteImport.update({
+  id: '/pesquisar',
+  path: '/pesquisar',
   getParentRoute: () => rootRouteImport,
 } as any)
 const VagasIndexRoute = VagasIndexRouteImport.update({
@@ -22,30 +29,43 @@ const VagasIndexRoute = VagasIndexRouteImport.update({
   path: '/vagas/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const VagasSlugRoute = VagasSlugRouteImport.update({
+  id: '/vagas/$slug',
+  path: '/vagas/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/pesquisar': typeof PesquisarRoute
+  '/vagas/$slug': typeof VagasSlugRoute
   '/vagas/': typeof VagasIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/pesquisar': typeof PesquisarRoute
+  '/vagas/$slug': typeof VagasSlugRoute
   '/vagas': typeof VagasIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/pesquisar': typeof PesquisarRoute
+  '/vagas/$slug': typeof VagasSlugRoute
   '/vagas/': typeof VagasIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/vagas/'
+  fullPaths: '/' | '/pesquisar' | '/vagas/$slug' | '/vagas/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/vagas'
-  id: '__root__' | '/' | '/vagas/'
+  to: '/' | '/pesquisar' | '/vagas/$slug' | '/vagas'
+  id: '__root__' | '/' | '/pesquisar' | '/vagas/$slug' | '/vagas/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  PesquisarRoute: typeof PesquisarRoute
+  VagasSlugRoute: typeof VagasSlugRoute
   VagasIndexRoute: typeof VagasIndexRoute
 }
 
@@ -58,6 +78,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/pesquisar': {
+      id: '/pesquisar'
+      path: '/pesquisar'
+      fullPath: '/pesquisar'
+      preLoaderRoute: typeof PesquisarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/vagas/': {
       id: '/vagas/'
       path: '/vagas'
@@ -65,11 +92,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof VagasIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/vagas/$slug': {
+      id: '/vagas/$slug'
+      path: '/vagas/$slug'
+      fullPath: '/vagas/$slug'
+      preLoaderRoute: typeof VagasSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  PesquisarRoute: PesquisarRoute,
+  VagasSlugRoute: VagasSlugRoute,
   VagasIndexRoute: VagasIndexRoute,
 }
 export const routeTree = rootRouteImport
