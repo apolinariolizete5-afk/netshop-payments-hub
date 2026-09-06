@@ -11,6 +11,8 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as CriarCvRouteImport } from './routes/criar-cv'
+import { Route as PerfilRouteImport } from './routes/perfil'
 import { Route as PesquisarRouteImport } from './routes/pesquisar'
 import { Route as VagasIndexRouteImport } from './routes/vagas.index'
 import { Route as VagasSlugRouteImport } from './routes/vagas.$slug'
@@ -23,6 +25,16 @@ const IndexRoute = IndexRouteImport.update({
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CriarCvRoute = CriarCvRouteImport.update({
+  id: '/criar-cv',
+  path: '/criar-cv',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PerfilRoute = PerfilRouteImport.update({
+  id: '/perfil',
+  path: '/perfil',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PesquisarRoute = PesquisarRouteImport.update({
@@ -44,6 +56,8 @@ const VagasSlugRoute = VagasSlugRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/criar-cv': typeof CriarCvRoute
+  '/perfil': typeof PerfilRoute
   '/pesquisar': typeof PesquisarRoute
   '/vagas/$slug': typeof VagasSlugRoute
   '/vagas/': typeof VagasIndexRoute
@@ -51,6 +65,8 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/criar-cv': typeof CriarCvRoute
+  '/perfil': typeof PerfilRoute
   '/pesquisar': typeof PesquisarRoute
   '/vagas/$slug': typeof VagasSlugRoute
   '/vagas': typeof VagasIndexRoute
@@ -59,21 +75,47 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/criar-cv': typeof CriarCvRoute
+  '/perfil': typeof PerfilRoute
   '/pesquisar': typeof PesquisarRoute
   '/vagas/$slug': typeof VagasSlugRoute
   '/vagas/': typeof VagasIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/pesquisar' | '/vagas/$slug' | '/vagas/'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/criar-cv'
+    | '/perfil'
+    | '/pesquisar'
+    | '/vagas/$slug'
+    | '/vagas/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/pesquisar' | '/vagas/$slug' | '/vagas'
-  id: '__root__' | '/' | '/auth' | '/pesquisar' | '/vagas/$slug' | '/vagas/'
+  to:
+    | '/'
+    | '/auth'
+    | '/criar-cv'
+    | '/perfil'
+    | '/pesquisar'
+    | '/vagas/$slug'
+    | '/vagas'
+  id:
+    | '__root__'
+    | '/'
+    | '/auth'
+    | '/criar-cv'
+    | '/perfil'
+    | '/pesquisar'
+    | '/vagas/$slug'
+    | '/vagas/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
+  CriarCvRoute: typeof CriarCvRoute
+  PerfilRoute: typeof PerfilRoute
   PesquisarRoute: typeof PesquisarRoute
   VagasSlugRoute: typeof VagasSlugRoute
   VagasIndexRoute: typeof VagasIndexRoute
@@ -93,6 +135,20 @@ declare module '@tanstack/react-router' {
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/criar-cv': {
+      id: '/criar-cv'
+      path: '/criar-cv'
+      fullPath: '/criar-cv'
+      preLoaderRoute: typeof CriarCvRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/perfil': {
+      id: '/perfil'
+      path: '/perfil'
+      fullPath: '/perfil'
+      preLoaderRoute: typeof PerfilRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/pesquisar': {
@@ -122,6 +178,8 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
+  CriarCvRoute: CriarCvRoute,
+  PerfilRoute: PerfilRoute,
   PesquisarRoute: PesquisarRoute,
   VagasSlugRoute: VagasSlugRoute,
   VagasIndexRoute: VagasIndexRoute,
