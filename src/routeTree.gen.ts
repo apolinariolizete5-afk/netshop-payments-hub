@@ -10,16 +10,27 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as CriarCvRouteImport } from './routes/criar-cv'
+import { Route as NotificacoesRouteImport } from './routes/notificacoes'
 import { Route as PerfilRouteImport } from './routes/perfil'
 import { Route as PesquisarRouteImport } from './routes/pesquisar'
+import { Route as PrivacidadeRouteImport } from './routes/privacidade'
+import { Route as EmpresasIndexRouteImport } from './routes/empresas.index'
+import { Route as EmpresasSlugRouteImport } from './routes/empresas.$slug'
 import { Route as VagasIndexRouteImport } from './routes/vagas.index'
 import { Route as VagasSlugRouteImport } from './routes/vagas.$slug'
+import { Route as ApiPublicNetshopWebhookRouteImport } from './routes/api/public/netshop-webhook'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -32,6 +43,11 @@ const CriarCvRoute = CriarCvRouteImport.update({
   path: '/criar-cv',
   getParentRoute: () => rootRouteImport,
 } as any)
+const NotificacoesRoute = NotificacoesRouteImport.update({
+  id: '/notificacoes',
+  path: '/notificacoes',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PerfilRoute = PerfilRouteImport.update({
   id: '/perfil',
   path: '/perfil',
@@ -40,6 +56,21 @@ const PerfilRoute = PerfilRouteImport.update({
 const PesquisarRoute = PesquisarRouteImport.update({
   id: '/pesquisar',
   path: '/pesquisar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacidadeRoute = PrivacidadeRouteImport.update({
+  id: '/privacidade',
+  path: '/privacidade',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EmpresasIndexRoute = EmpresasIndexRouteImport.update({
+  id: '/empresas/',
+  path: '/empresas/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EmpresasSlugRoute = EmpresasSlugRouteImport.update({
+  id: '/empresas/$slug',
+  path: '/empresas/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const VagasIndexRoute = VagasIndexRouteImport.update({
@@ -52,73 +83,120 @@ const VagasSlugRoute = VagasSlugRouteImport.update({
   path: '/vagas/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicNetshopWebhookRoute = ApiPublicNetshopWebhookRouteImport.update({
+  id: '/api/public/netshop-webhook',
+  path: '/api/public/netshop-webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/criar-cv': typeof CriarCvRoute
+  '/notificacoes': typeof NotificacoesRoute
   '/perfil': typeof PerfilRoute
   '/pesquisar': typeof PesquisarRoute
+  '/privacidade': typeof PrivacidadeRoute
+  '/empresas/$slug': typeof EmpresasSlugRoute
   '/vagas/$slug': typeof VagasSlugRoute
+  '/empresas/': typeof EmpresasIndexRoute
   '/vagas/': typeof VagasIndexRoute
+  '/api/public/netshop-webhook': typeof ApiPublicNetshopWebhookRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/criar-cv': typeof CriarCvRoute
+  '/notificacoes': typeof NotificacoesRoute
   '/perfil': typeof PerfilRoute
   '/pesquisar': typeof PesquisarRoute
+  '/privacidade': typeof PrivacidadeRoute
+  '/empresas/$slug': typeof EmpresasSlugRoute
   '/vagas/$slug': typeof VagasSlugRoute
+  '/empresas': typeof EmpresasIndexRoute
   '/vagas': typeof VagasIndexRoute
+  '/api/public/netshop-webhook': typeof ApiPublicNetshopWebhookRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/criar-cv': typeof CriarCvRoute
+  '/notificacoes': typeof NotificacoesRoute
   '/perfil': typeof PerfilRoute
   '/pesquisar': typeof PesquisarRoute
+  '/privacidade': typeof PrivacidadeRoute
+  '/empresas/$slug': typeof EmpresasSlugRoute
   '/vagas/$slug': typeof VagasSlugRoute
+  '/empresas/': typeof EmpresasIndexRoute
   '/vagas/': typeof VagasIndexRoute
+  '/api/public/netshop-webhook': typeof ApiPublicNetshopWebhookRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin'
     | '/auth'
     | '/criar-cv'
+    | '/notificacoes'
     | '/perfil'
     | '/pesquisar'
+    | '/privacidade'
+    | '/empresas/$slug'
     | '/vagas/$slug'
+    | '/empresas/'
     | '/vagas/'
+    | '/api/public/netshop-webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/admin'
     | '/auth'
     | '/criar-cv'
+    | '/notificacoes'
     | '/perfil'
     | '/pesquisar'
+    | '/privacidade'
+    | '/empresas/$slug'
     | '/vagas/$slug'
+    | '/empresas'
     | '/vagas'
+    | '/api/public/netshop-webhook'
   id:
     | '__root__'
     | '/'
+    | '/admin'
     | '/auth'
     | '/criar-cv'
+    | '/notificacoes'
     | '/perfil'
     | '/pesquisar'
+    | '/privacidade'
+    | '/empresas/$slug'
     | '/vagas/$slug'
+    | '/empresas/'
     | '/vagas/'
+    | '/api/public/netshop-webhook'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRoute
   AuthRoute: typeof AuthRoute
   CriarCvRoute: typeof CriarCvRoute
+  NotificacoesRoute: typeof NotificacoesRoute
   PerfilRoute: typeof PerfilRoute
   PesquisarRoute: typeof PesquisarRoute
+  PrivacidadeRoute: typeof PrivacidadeRoute
+  EmpresasSlugRoute: typeof EmpresasSlugRoute
   VagasSlugRoute: typeof VagasSlugRoute
+  EmpresasIndexRoute: typeof EmpresasIndexRoute
   VagasIndexRoute: typeof VagasIndexRoute
+  ApiPublicNetshopWebhookRoute: typeof ApiPublicNetshopWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -128,6 +206,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -144,6 +229,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CriarCvRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/notificacoes': {
+      id: '/notificacoes'
+      path: '/notificacoes'
+      fullPath: '/notificacoes'
+      preLoaderRoute: typeof NotificacoesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/perfil': {
       id: '/perfil'
       path: '/perfil'
@@ -156,6 +248,27 @@ declare module '@tanstack/react-router' {
       path: '/pesquisar'
       fullPath: '/pesquisar'
       preLoaderRoute: typeof PesquisarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacidade': {
+      id: '/privacidade'
+      path: '/privacidade'
+      fullPath: '/privacidade'
+      preLoaderRoute: typeof PrivacidadeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/empresas/': {
+      id: '/empresas/'
+      path: '/empresas'
+      fullPath: '/empresas/'
+      preLoaderRoute: typeof EmpresasIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/empresas/$slug': {
+      id: '/empresas/$slug'
+      path: '/empresas/$slug'
+      fullPath: '/empresas/$slug'
+      preLoaderRoute: typeof EmpresasSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/vagas/': {
@@ -172,17 +285,30 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof VagasSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/netshop-webhook': {
+      id: '/api/public/netshop-webhook'
+      path: '/api/public/netshop-webhook'
+      fullPath: '/api/public/netshop-webhook'
+      preLoaderRoute: typeof ApiPublicNetshopWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRoute,
   AuthRoute: AuthRoute,
   CriarCvRoute: CriarCvRoute,
+  NotificacoesRoute: NotificacoesRoute,
   PerfilRoute: PerfilRoute,
   PesquisarRoute: PesquisarRoute,
+  PrivacidadeRoute: PrivacidadeRoute,
+  EmpresasSlugRoute: EmpresasSlugRoute,
   VagasSlugRoute: VagasSlugRoute,
+  EmpresasIndexRoute: EmpresasIndexRoute,
   VagasIndexRoute: VagasIndexRoute,
+  ApiPublicNetshopWebhookRoute: ApiPublicNetshopWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
