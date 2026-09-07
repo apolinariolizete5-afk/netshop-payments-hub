@@ -1,181 +1,271 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { LogOut } from "lucide-react";
+import { Bell, Bookmark, FileText, LogOut, Send, User } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/layout/AppShell";
-import { useAuth } from "@/hooks/useAuth";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
-import { PROVINCES } from "@/lib/constants";
+import { useSession } from "@/hooks/useSession";
+import { useApplications, useSavedJobs } from "@/hooks/useUserJobs";
+import { timeAgo } from "@/lib/jobs.types";
 
 export const Route = createFileRoute("/perfil")({
+  ssr: false,
   head: () => ({
     meta: [
-      { title: "O meu perfil e candidaturas | Moza Empregos" },
+      { title: "O meu perfil | Moza Empregos" },
       {
         name: "description",
-        content:
-          "Gira os seus dados pessoais, veja as candidaturas enviadas e o estado do seu CV no Moza Empregos.",
+        content: "Gira o seu perfil, vagas guardadas e candidaturas no Moza Empregos.",
       },
       { property: "og:title", content: "O meu perfil | Moza Empregos" },
-      { property: "og:description", content: "Dados pessoais e candidaturas num só lugar." },
-      { property: "og:type", content: "profile" },
-      { name: "twitter:card", content: "summary_large_image" },
+      {
+        property: "og:description",
+        content: "Perfil, vagas guardadas e candidaturas.",
+      },
+      { name: "robots", content: "noindex" },
     ],
   }),
-  component: Perfil,
+  component: PerfilPage,
 });
 
-function Perfil() {
-  const { user, loading } = useAuth();
+const STATUS_LABELS: Record<string, string> = {
+  enviada: "Enviada",
+  em_analise: "Em análise",
+  entrevista: "Entrevista",
+  rejeitada: "Não selecionado",
+  aceite: "Aceite",
+};
+
+function PerfilPage() {
+  const { user, loading } = useSession();
   const navigate = useNavigate();
-  const [fullName, setFullName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [province, setProvince] = useState("");
+  const queryClient = useQueryClient();
+  const [form, setForm] = useState({ full_name: "", headline: "", phone: "", location: "" });
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    if (!user) return;
-    void (async () => {
-      const { data } = await supabase
-        .from("profiles")
-        .select("full_name, phone, province")
-        .eq("id", user.id)
-        .maybeSingle();
-      if (data) {
-        setFullName(data.full_name ?? "");
-        setPhone(data.phone ?? "");
-        setProvince(data.province ?? "");
-      }
-    })();
-  }, [user]);
-
-  const applications = useQuery({
-    queryKey: ["applications", user?.id],
-    enabled: Boolean(user),
+  const profile = useQuery({
+    queryKey: ["profile", user?.id],
+    enabled: !!user,
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("applications")
-        .select("id, status, created_at, jobs(title, company, slug)")
-        .order("created_at", { ascending: false });
-      if (error) throw new Error(error.message);
-      return data ?? [];
+        .from("profiles")
+        .select("full_name, headline, phone, location")
+        .eq("id", user!.id)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
     },
   });
 
-  async function save() {
+  const saved = useSavedJobs(user?.id);
+  const applications = useApplications(user?.id);
+
+  useEffect(() => {
+    if (profile.data) {
+      setForm({
+        full_name: profile.data.full_name ?? "",
+        headline: profile.data.headline ?? "",
+        phone: profile.data.phone ?? "",
+        location: profile.data.location ?? "",
+      });
+    }
+  }, [profile.data]);
+
+  if (!loading && !user) {
+    return (
+      <AppShell>
+        <div className="py-16 text-center">
+          <h1 className="text-xl font-extrabold">Entre na sua conta</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Precisa de uma conta para guardar vagas e candidatar-se.
+          </p>
+          <Button asChild className="mt-4">
+            <Link to="/auth">Entrar ou criar conta</Link>
+          </Button>
+        </div>
+      </AppShell>
+    );
+  }
+
+  const saveProfile = async () => {
     if (!user) return;
     setSaving(true);
     const { error } = await supabase
       .from("profiles")
-      .upsert({ id: user.id, full_name: fullName, phone, province });
+      .update({
+        full_name: form.full_name || null,
+        headline: form.headline || null,
+        phone: form.phone || null,
+        location: form.location || null,
+      })
+      .eq("id", user.id);
     setSaving(false);
-    if (error) toast.error(error.message);
-    else toast.success("Perfil actualizado.");
-  }
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Perfil atualizado");
+    profile.refetch();
+  };
 
-  if (loading) {
-    return (
-      <AppShell>
-        <div className="h-64 animate-pulse rounded-2xl bg-muted" />
-      </AppShell>
-    );
-  }
-
-  if (!user) {
-    return (
-      <AppShell>
-        <div className="mx-auto max-w-md rounded-2xl border border-border bg-card p-6 text-center">
-          <h1 className="font-display text-xl font-bold">O meu perfil</h1>
-          <p className="mt-2 text-sm text-muted-foreground">Entre para ver o seu perfil.</p>
-          <Link
-            to="/auth"
-            className="mt-4 inline-block rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground"
-          >
-            Entrar
-          </Link>
-        </div>
-      </AppShell>
-    );
-  }
+  const signOut = async () => {
+    await queryClient.cancelQueries();
+    queryClient.clear();
+    await supabase.auth.signOut();
+    navigate({ to: "/auth", replace: true });
+  };
 
   return (
     <AppShell>
-      <div className="flex items-center justify-between gap-3">
-        <h1 className="font-display text-2xl font-bold">O meu perfil</h1>
-        <button
-          onClick={async () => {
-            await supabase.auth.signOut();
-            navigate({ to: "/" });
-          }}
-          className="inline-flex items-center gap-2 rounded-xl border border-border px-4 py-2 text-sm font-medium hover:border-destructive hover:text-destructive"
-        >
-          <LogOut className="h-4 w-4" /> Sair
-        </button>
-      </div>
-      <p className="mt-1 text-sm text-muted-foreground">{user.email}</p>
-
-      <section className="mt-5 space-y-3 rounded-2xl border border-border bg-card p-5">
-        <label className="block text-xs font-medium text-muted-foreground">
-          Nome completo
-          <input
-            value={fullName}
-            onChange={(e) => setFullName(e.target.value)}
-            className="mt-1 w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm text-foreground outline-none focus:border-primary"
-          />
-        </label>
-        <label className="block text-xs font-medium text-muted-foreground">
-          Telemóvel
-          <input
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            className="mt-1 w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm text-foreground outline-none focus:border-primary"
-          />
-        </label>
-        <label className="block text-xs font-medium text-muted-foreground">
-          Província
-          <select
-            value={province}
-            onChange={(e) => setProvince(e.target.value)}
-            className="mt-1 w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm text-foreground outline-none focus:border-primary"
-          >
-            <option value="">Seleccione</option>
-            {PROVINCES.map((p) => (
-              <option key={p} value={p}>
-                {p}
-              </option>
-            ))}
-          </select>
-        </label>
-        <button
-          onClick={save}
-          disabled={saving}
-          className="rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground disabled:opacity-60"
-        >
-          {saving ? "A guardar..." : "Guardar alterações"}
-        </button>
-      </section>
-
-      <section className="mt-6">
-        <h2 className="font-display text-lg font-semibold">As minhas candidaturas</h2>
-        <div className="mt-3 space-y-2">
-          {(applications.data ?? []).map((a) => (
-            <div
-              key={a.id}
-              className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card p-4"
-            >
-              <div>
-                <p className="text-sm font-semibold">{a.jobs?.title}</p>
-                <p className="text-xs text-muted-foreground">{a.jobs?.company}</p>
-              </div>
-              <span className="rounded-full bg-muted px-3 py-1 text-xs">{a.status}</span>
-            </div>
-          ))}
-          {!applications.isLoading && (applications.data?.length ?? 0) === 0 && (
-            <p className="text-sm text-muted-foreground">Ainda não se candidatou a nenhuma vaga.</p>
-          )}
+      <header className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
+        <div className="flex min-w-0 items-center gap-3">
+          <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-primary text-primary-foreground">
+            <User className="h-6 w-6" aria-hidden />
+          </span>
+          <div className="min-w-0">
+            <h1 className="truncate text-xl font-extrabold">
+              {form.full_name || "O meu perfil"}
+            </h1>
+            <p className="truncate text-sm text-muted-foreground">{user?.email}</p>
+          </div>
         </div>
-      </section>
+        <Button variant="ghost" size="icon" aria-label="Terminar sessão" onClick={signOut}>
+          <LogOut className="h-5 w-5" />
+        </Button>
+      </header>
+
+      <div className="mt-4 grid grid-cols-2 gap-2">
+        <Button variant="outline" asChild className="justify-start gap-2">
+          <Link to="/notificacoes">
+            <Bell className="h-4 w-4" /> Notificações
+          </Link>
+        </Button>
+        <Button variant="outline" asChild className="justify-start gap-2">
+          <Link to="/criar-cv">
+            <FileText className="h-4 w-4" /> Criar CV
+          </Link>
+        </Button>
+      </div>
+
+      <Tabs defaultValue="dados" className="mt-6">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="dados">Dados</TabsTrigger>
+          <TabsTrigger value="guardadas">Guardadas</TabsTrigger>
+          <TabsTrigger value="candidaturas">Candidaturas</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="dados" className="space-y-3">
+          <Field id="full_name" label="Nome completo" value={form.full_name} onChange={(v) => setForm({ ...form, full_name: v })} />
+          <Field id="headline" label="Título profissional" value={form.headline} onChange={(v) => setForm({ ...form, headline: v })} />
+          <Field id="phone" label="Telefone" value={form.phone} onChange={(v) => setForm({ ...form, phone: v })} />
+          <Field id="location" label="Localização" value={form.location} onChange={(v) => setForm({ ...form, location: v })} />
+          <Button onClick={saveProfile} disabled={saving}>
+            {saving ? "A guardar..." : "Guardar alterações"}
+          </Button>
+        </TabsContent>
+
+        <TabsContent value="guardadas">
+          {(saved.data ?? []).length === 0 ? (
+            <Empty icon={<Bookmark className="h-5 w-5" />} text="Ainda não guardou nenhuma vaga." />
+          ) : (
+            <ul className="space-y-2">
+              {(saved.data ?? []).map((row) => {
+                const job = row.jobs as unknown as {
+                  slug: string;
+                  title: string;
+                  company_name: string;
+                  location: string;
+                } | null;
+                if (!job) return null;
+                return (
+                  <li key={row.job_id} className="rounded-2xl border border-border bg-card p-4">
+                    <Link
+                      to="/vagas/$slug"
+                      params={{ slug: job.slug }}
+                      className="text-sm font-bold hover:underline"
+                    >
+                      {job.title}
+                    </Link>
+                    <p className="text-xs text-muted-foreground">
+                      {job.company_name} · {job.location}
+                    </p>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </TabsContent>
+
+        <TabsContent value="candidaturas">
+          {(applications.data ?? []).length === 0 ? (
+            <Empty icon={<Send className="h-5 w-5" />} text="Ainda não enviou candidaturas." />
+          ) : (
+            <ul className="space-y-2">
+              {(applications.data ?? []).map((row) => {
+                const job = row.jobs as unknown as {
+                  slug: string;
+                  title: string;
+                  company_name: string;
+                } | null;
+                return (
+                  <li key={row.id} className="rounded-2xl border border-border bg-card p-4">
+                    {job ? (
+                      <Link
+                        to="/vagas/$slug"
+                        params={{ slug: job.slug }}
+                        className="text-sm font-bold hover:underline"
+                      >
+                        {job.title}
+                      </Link>
+                    ) : (
+                      <span className="text-sm font-bold">Vaga removida</span>
+                    )}
+                    <p className="text-xs text-muted-foreground">
+                      {job?.company_name} · {STATUS_LABELS[row.status] ?? row.status} ·{" "}
+                      {timeAgo(row.created_at)}
+                    </p>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </TabsContent>
+      </Tabs>
     </AppShell>
+  );
+}
+
+function Field({
+  id,
+  label,
+  value,
+  onChange,
+}: {
+  id: string;
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <div className="space-y-1.5">
+      <Label htmlFor={id}>{label}</Label>
+      <Input id={id} value={value} onChange={(event) => onChange(event.target.value)} />
+    </div>
+  );
+}
+
+function Empty({ icon, text }: { icon: React.ReactNode; text: string }) {
+  return (
+    <div className="rounded-2xl border border-dashed border-border bg-card px-4 py-10 text-center text-sm text-muted-foreground">
+      <span className="mx-auto mb-2 grid h-10 w-10 place-items-center rounded-full bg-muted">
+        {icon}
+      </span>
+      {text}
+    </div>
   );
 }
