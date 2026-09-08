@@ -93,13 +93,27 @@ export function useCvDownload() {
         });
 
         if (result.ok) {
-          if (result.checkoutUrl) {
-            window.location.href = result.checkoutUrl;
-          } else {
-            setMessage(
-              "Pagamento iniciado, mas a página de pagamento não foi encontrada.",
-            );
+          setMessage(
+            method === "card"
+              ? "A processar o pagamento..."
+              : "Confirme o pagamento no seu telemóvel introduzindo o PIN.",
+          );
+
+          // Aguarda a confirmação sem sair do site.
+          for (let i = 0; i < 30; i++) {
+            await new Promise((r) => setTimeout(r, 4000));
+            const check = await access();
+            if (check.paid) {
+              setPaid(true);
+              setMessage("Pagamento confirmado. A preparar o download...");
+              setTimeout(() => window.print(), 600);
+              return;
+            }
           }
+
+          setMessage(
+            "Ainda não recebemos a confirmação. Se já introduziu o PIN, toque em verificar pagamento.",
+          );
         } else {
           setMessage(result.error);
         }
