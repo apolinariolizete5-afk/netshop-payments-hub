@@ -22,6 +22,23 @@ function getWalletId(walletId?: string): string {
 }
 
 /**
+ * Normaliza o número moçambicano para o formato 8XXXXXXXX.
+ */
+function normalizeMsisdn(raw: string): string | null {
+  let n = (raw || "").replace(/\D/g, "");
+  if (n.startsWith("00")) n = n.slice(2);
+  if (n.startsWith("258")) n = n.slice(3);
+  if (n.length === 9 && n.startsWith("8")) return n;
+  return null;
+}
+
+const METHOD_PREFIXES: Record<string, string[]> = {
+  mpesa: ["84", "85"],
+  emola: ["86", "87"],
+  mkesh: ["82", "83"],
+};
+
+/**
  * Preço do download do CV em MZN.
  */
 export const getCvPrice = createServerFn({
