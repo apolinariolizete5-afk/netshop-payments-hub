@@ -30,7 +30,7 @@ function clean(input: Record<string, unknown>): VagasSearch {
 const jobsQuery = (search: VagasSearch) =>
   queryOptions({
     queryKey: ["jobs", "list", search],
-    queryFn: () => listJobs({ data: { ...search, limit: 20 } as VagasSearch & { limit: number } }),
+    queryFn: () => listJobs({ data: { ...search, limit: 10 } as VagasSearch & { limit: number } }),
   });
 
 const facetsQuery = queryOptions({
@@ -90,7 +90,7 @@ function VagasPage() {
   const { data: facets } = useSuspenseQuery(facetsQuery);
 
   const page = search.page ?? 1;
-  const totalPages = Math.max(Math.ceil(data.total / 20), 1);
+  const totalPages = Math.max(Math.ceil(data.total / 10), 1);
 
   const filters: FiltersValue = {
     location: search.location ?? "",
@@ -157,15 +157,29 @@ function VagasPage() {
       )}
 
       {totalPages > 1 && (
-        <nav className="mt-6 flex items-center justify-between gap-3" aria-label="Paginação">
-          <Button variant="outline" disabled={page <= 1} onClick={() => goToPage(page - 1)}>
+        <nav className="mt-6 flex flex-wrap items-center justify-center gap-2" aria-label="Paginação">
+          <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => goToPage(page - 1)}>
             Anterior
           </Button>
-          <span className="text-sm text-muted-foreground">
-            Página {page} de {totalPages}
-          </span>
+          {Array.from({ length: totalPages }, (_, i) => i + 1)
+            .filter((n) => n === 1 || n === totalPages || Math.abs(n - page) <= 2)
+            .map((n, i, arr) => (
+              <span key={n} className="flex items-center gap-2">
+                {i > 0 && arr[i - 1] !== undefined && n - (arr[i - 1] as number) > 1 && (
+                  <span className="text-muted-foreground">…</span>
+                )}
+                <Button
+                  variant={n === page ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => goToPage(n)}
+                >
+                  {n}
+                </Button>
+              </span>
+            ))}
           <Button
             variant="outline"
+            size="sm"
             disabled={page >= totalPages}
             onClick={() => goToPage(page + 1)}
           >
