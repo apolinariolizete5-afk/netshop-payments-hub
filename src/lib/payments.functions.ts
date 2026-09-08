@@ -22,6 +22,23 @@ function getWalletId(walletId?: string): string {
 }
 
 /**
+ * Normaliza o número moçambicano para o formato 8XXXXXXXX.
+ */
+function normalizeMsisdn(raw: string): string | null {
+  let n = (raw || "").replace(/\D/g, "");
+  if (n.startsWith("00")) n = n.slice(2);
+  if (n.startsWith("258")) n = n.slice(3);
+  if (n.length === 9 && n.startsWith("8")) return n;
+  return null;
+}
+
+const METHOD_PREFIXES: Record<string, string[]> = {
+  mpesa: ["84", "85"],
+  emola: ["86", "87"],
+  mkesh: ["82", "83"],
+};
+
+/**
  * Preço do download do CV em MZN.
  */
 export const getCvPrice = createServerFn({
@@ -122,12 +139,35 @@ export const createCvPayment = createServerFn({
       };
     }
 
-    if (data.method !== "card" && !data.msisdn) {
-      return {
-        ok: false as const,
-        error:
-          "O número de telefone é obrigatório para este método de pagamento.",
-      };
+    let msisdn: string | null = null;
+
+    if (data.method !== "card") {
+      if (!data.msisdn) {
+        return {
+          ok: false as const,
+          error:
+            "O número de telefone é obrigatório para este método de pagamento.",
+        };
+      }
+
+      msisdn = normalizeMsisdn(data.msisdn);
+
+      if (!msisdn) {
+        return {
+          ok: false as const,
+          error:
+            "Número inválido. Use o formato 8XXXXXXXX (9 dígitos).",
+        };
+      }
+
+      const allowed = METHOD_PREFIXES[data.method] ?? [];
+
+      if (allowed.length && !allowed.some((p) => msisdn!.startsWith(p))) {
+        return {
+          ok: false as const,
+          error: `Número não compatível: ${data.method === "mpesa" ? "M-Pesa aceita 84 ou 85" : data.method === "emola" ? "e-Mola aceita 86 ou 87" : "mKesh aceita 82 ou 83"}.`,
+        };
+      }
     }
 
     const { data: setting } = await context.supabase
@@ -185,7 +225,7 @@ export const createCvPayment = createServerFn({
     };
 
     if (data.method !== "card") {
-      chargeBody["msisdn"] = data.msisdn;
+      chargeBody["msisdn"] = msisdn;
     }
 
     try {
