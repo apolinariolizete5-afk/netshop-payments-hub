@@ -26,9 +26,19 @@ function getWalletId(walletId?: string): string {
  */
 function normalizeMsisdn(raw: string): string | null {
   let n = (raw || "").replace(/\D/g, "");
-  if (n.startsWith("00")) n = n.slice(2);
-  if (n.startsWith("258")) n = n.slice(3);
-  if (n.length === 9 && n.startsWith("8")) return n;
+
+  if (n.startsWith("00")) {
+    n = n.slice(2);
+  }
+
+  if (n.startsWith("258")) {
+    n = n.slice(3);
+  }
+
+  if (n.length === 9 && n.startsWith("8")) {
+    return n;
+  }
+
   return null;
 }
 
@@ -162,10 +172,20 @@ export const createCvPayment = createServerFn({
 
       const allowed = METHOD_PREFIXES[data.method] ?? [];
 
-      if (allowed.length && !allowed.some((p) => msisdn!.startsWith(p))) {
+      if (
+        allowed.length &&
+        !allowed.some((p) => msisdn!.startsWith(p))
+      ) {
         return {
           ok: false as const,
-          error: `Número não compatível: ${data.method === "mpesa" ? "M-Pesa aceita 84 ou 85" : data.method === "emola" ? "e-Mola aceita 86 ou 87" : "mKesh aceita 82 ou 83"}.`,
+          error:
+            `Número não compatível: ${
+              data.method === "mpesa"
+                ? "M-Pesa aceita 84 ou 85"
+                : data.method === "emola"
+                  ? "e-Mola aceita 86 ou 87"
+                  : "mKesh aceita 82 ou 83"
+            }.`,
         };
       }
     }
@@ -229,22 +249,41 @@ export const createCvPayment = createServerFn({
     }
 
     try {
-      const response = await fetch(
-        `${NETSHOP_API}/charges`,
-        {
-          method: "POST",
+      /**
+       * Timeout de segurança:
+       * evita que a Server Function fique pendurada
+       * indefinidamente caso a NetShop não responda.
+       */
+      const controller = new AbortController();
 
-          headers: {
-            Authorization: `Bearer ${apiKey}`,
-            "X-Wallet-ID": walletId,
-            "Idempotency-Key": reference,
-            "Content-Type": "application/json",
-            Accept: "application/json",
-          },
+      const timeout = setTimeout(() => {
+        controller.abort();
+      }, 15000);
 
-          body: JSON.stringify(chargeBody),
-        }
-      );
+      let response: Response;
+
+      try {
+        response = await fetch(
+          `${NETSHOP_API}/charges`,
+          {
+            method: "POST",
+
+            headers: {
+              Authorization: `Bearer ${apiKey}`,
+              "X-Wallet-ID": walletId,
+              "Idempotency-Key": reference,
+              "Content-Type": "application/json",
+              Accept: "application/json",
+            },
+
+            body: JSON.stringify(chargeBody),
+
+            signal: controller.signal,
+          }
+        );
+      } finally {
+        clearTimeout(timeout);
+      }
 
       const json = (await response
         .json()
