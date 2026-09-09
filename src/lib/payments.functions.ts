@@ -296,7 +296,10 @@ export const createCvPayment = createServerFn({
     };
 
     if (data.method !== "card") {
-      chargeBody["msisdn"] = msisdn;
+  chargeBody["msisdn"] =
+    data.method === "mkesh"
+      ? `+258${msisdn}`
+      : msisdn;
     }
 
     try {
