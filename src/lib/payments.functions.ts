@@ -153,7 +153,7 @@ export const createCvPayment = createServerFn({
       };
     }
 
-    const walletId = getWalletId(data.walletId);
+    const walletId = getWalletId(data.method, data.walletId);
 
     if (!walletId) {
       return {
