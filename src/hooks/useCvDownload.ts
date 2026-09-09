@@ -45,8 +45,12 @@ function detectMobilePaymentMethod(
  * Controla o download do CV.
  *
  * O PDF só fica disponível depois do pagamento confirmado.
- * Para M-Pesa e mKesh, o método é detetado automaticamente
- * pelo prefixo do número.
+ *
+ * Para pagamentos móveis:
+ * 84/85 → M-Pesa
+ * 82/83 → mKesh
+ *
+ * O método é sempre determinado pelo prefixo do número.
  */
 export function useCvDownload() {
   const { user } = useSession();
@@ -103,7 +107,9 @@ export function useCvDownload() {
 
       const normalizedPhone = (phone ?? "").trim();
 
-      // Cartão não precisa de número de telemóvel.
+      /*
+       * Cartão não precisa de número de telemóvel.
+       */
       if (method === "card") {
         setBusy(true);
         setMessage("");
@@ -120,7 +126,9 @@ export function useCvDownload() {
             setMessage("A processar o pagamento...");
 
             for (let i = 0; i < 30; i++) {
-              await new Promise((r) => setTimeout(r, 4000));
+              await new Promise((r) =>
+                setTimeout(r, 4000),
+              );
 
               const check = await access();
 
@@ -130,7 +138,11 @@ export function useCvDownload() {
                   "Pagamento confirmado. A preparar o download...",
                 );
 
-                setTimeout(() => window.print(), 600);
+                setTimeout(
+                  () => window.print(),
+                  600,
+                );
+
                 return;
               }
             }
@@ -157,6 +169,9 @@ export function useCvDownload() {
         return;
       }
 
+      /*
+       * Pagamentos móveis precisam de número.
+       */
       if (!normalizedPhone) {
         setMessage(
           "Introduza o número de telemóvel para continuar com o pagamento.",
@@ -165,11 +180,18 @@ export function useCvDownload() {
       }
 
       /*
-       * Se o método não foi informado, deteta automaticamente
-       * pelo prefixo do número.
+       * O método móvel é SEMPRE detetado pelo prefixo.
+       *
+       * 84/85 → M-Pesa
+       * 82/83 → mKesh
+       *
+       * 86/87 e outros prefixos → recusados
+       * antes de chegar à NetShop.
        */
       const selectedMethod =
-        method ?? detectMobilePaymentMethod(normalizedPhone);
+        detectMobilePaymentMethod(
+          normalizedPhone,
+        );
 
       if (!selectedMethod) {
         setMessage(
@@ -197,19 +219,28 @@ export function useCvDownload() {
               : "Confirme o pagamento mKesh no seu telemóvel introduzindo o PIN.",
           );
 
-          // Aguarda a confirmação sem sair do site.
+          /*
+           * Aguarda a confirmação do pagamento.
+           */
           for (let i = 0; i < 30; i++) {
-            await new Promise((r) => setTimeout(r, 4000));
+            await new Promise((r) =>
+              setTimeout(r, 4000),
+            );
 
             const check = await access();
 
             if (check.paid) {
               setPaid(true);
+
               setMessage(
                 "Pagamento confirmado. A preparar o download...",
               );
 
-              setTimeout(() => window.print(), 600);
+              setTimeout(
+                () => window.print(),
+                600,
+              );
+
               return;
             }
           }
@@ -238,7 +269,9 @@ export function useCvDownload() {
 
   const recheck = useCallback(async () => {
     if (!user) {
-      setMessage("Inicie sessão para verificar o pagamento.");
+      setMessage(
+        "Inicie sessão para verificar o pagamento.",
+      );
       return;
     }
 
@@ -272,4 +305,4 @@ export function useCvDownload() {
     download,
     recheck,
   };
-      }
+        }
