@@ -7,12 +7,15 @@ import {
   getCvPrice,
 } from "@/lib/payments.functions";
 
-type PaymentMethod = "mpesa" | "emola" | "mkesh" | "card";
-type MobilePaymentMethod = Exclude<PaymentMethod, "card">;
+type PaymentMethod = "mpesa" | "mkesh" | "card";
+type MobilePaymentMethod = "mpesa" | "mkesh";
 
 /**
- * Deteta automaticamente o método de pagamento pelo prefixo
+ * Deteta o método de pagamento pelo prefixo
  * do número de telemóvel moçambicano.
+ *
+ * M-Pesa: 84 ou 85
+ * mKesh: 82 ou 83
  */
 function detectMobilePaymentMethod(
   raw: string,
@@ -31,10 +34,6 @@ function detectMobilePaymentMethod(
     return "mpesa";
   }
 
-  if (n.startsWith("86") || n.startsWith("87")) {
-    return "emola";
-  }
-
   if (n.startsWith("82") || n.startsWith("83")) {
     return "mkesh";
   }
@@ -46,8 +45,8 @@ function detectMobilePaymentMethod(
  * Controla o download do CV.
  *
  * O PDF só fica disponível depois do pagamento confirmado.
- * Para M-Pesa, e-Mola e mKesh, o método é detetado
- * automaticamente pelo prefixo do número.
+ * Para M-Pesa e mKesh, o método é detetado automaticamente
+ * pelo prefixo do número.
  */
 export function useCvDownload() {
   const { user } = useSession();
@@ -104,10 +103,7 @@ export function useCvDownload() {
 
       const normalizedPhone = (phone ?? "").trim();
 
-      /*
-       * Se o método for cartão, não precisamos de telefone.
-       * Para pagamentos móveis, o telefone é obrigatório.
-       */
+      // Cartão não precisa de número de telemóvel.
       if (method === "card") {
         setBusy(true);
         setMessage("");
@@ -169,14 +165,15 @@ export function useCvDownload() {
       }
 
       /*
-       * Se o método não foi informado, detetamos pelo prefixo.
+       * Se o método não foi informado, deteta automaticamente
+       * pelo prefixo do número.
        */
       const selectedMethod =
         method ?? detectMobilePaymentMethod(normalizedPhone);
 
       if (!selectedMethod) {
         setMessage(
-          "Número não compatível. Use M-Pesa (84/85), e-Mola (86/87) ou mKesh (82/83).",
+          "Número não compatível. M-Pesa aceita 84 ou 85. mKesh aceita 82 ou 83.",
         );
         return;
       }
@@ -197,9 +194,7 @@ export function useCvDownload() {
           setMessage(
             selectedMethod === "mpesa"
               ? "Confirme o pagamento M-Pesa no seu telemóvel introduzindo o PIN."
-              : selectedMethod === "emola"
-                ? "Confirme o pagamento e-Mola no seu telemóvel introduzindo o PIN."
-                : "Confirme o pagamento mKesh no seu telemóvel introduzindo o PIN.",
+              : "Confirme o pagamento mKesh no seu telemóvel introduzindo o PIN.",
           );
 
           // Aguarda a confirmação sem sair do site.
@@ -277,4 +272,4 @@ export function useCvDownload() {
     download,
     recheck,
   };
-    }
+      }
