@@ -12,6 +12,7 @@ import {
   Trash2,
   Upload,
   UserRound,
+  X,
 } from "lucide-react";
 
 import { AppShell } from "@/components/layout/AppShell";
@@ -109,6 +110,10 @@ function CriarCvPage() {
   const [data, setData] = useState<CvData>(EMPTY_CV);
   const [step, setStep] = useState(0);
 
+  const [paymentOpen, setPaymentOpen] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<"mpesa" | "mkesh">("mpesa");
+  const [paymentPhone, setPaymentPhone] = useState("");
+
   const [aiState, setAiState] = useState<{
     loading: boolean;
     message: string;
@@ -131,6 +136,16 @@ function CriarCvPage() {
 
   const parse = useServerFn(parseCvFile);
   const pdf = useCvDownload();
+
+  function openPayment() {
+    if (pdf.paid) {
+      void pdf.download(data.phone);
+      return;
+    }
+    setPaymentPhone(data.phone || "");
+    setPaymentMethod("mpesa");
+    setPaymentOpen(true);
+  }
 
   useEffect(() => {
     setData(loadCv());
@@ -157,11 +172,11 @@ function CriarCvPage() {
   const preview = previewData(data);
 
   const visibleTemplates =
-  CV_TEMPLATES.filter((tpl) => {
-    const matchesFilter =
-      templateFilter === "Todos" ||
-      (templateFilter === "Premium" &&
-        tpl.premium);
+    CV_TEMPLATES.filter((tpl) => {
+      const matchesFilter =
+        templateFilter === "Todos" ||
+        (templateFilter === "Premium" &&
+          tpl.premium);
       const search =
         templateSearch.trim().toLowerCase();
 
@@ -1078,9 +1093,7 @@ function CriarCvPage() {
                 <Button
                   className="gap-1"
                   disabled={pdf.busy}
-                  onClick={() =>
-                    void pdf.download(data.phone)
-                  }
+                  onClick={openPayment}
                 >
                   {pdf.busy ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -1159,9 +1172,7 @@ function CriarCvPage() {
             variant="outline"
             className="mt-3 w-full gap-1 print:hidden"
             disabled={pdf.busy}
-            onClick={() =>
-              void pdf.download(data.phone)
-            }
+            onClick={openPayment}
           >
             {pdf.busy ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -1203,6 +1214,143 @@ function CriarCvPage() {
           ) : null}
         </div>
       </div>
+
+      {paymentOpen && !pdf.paid ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) {
+              setPaymentOpen(false);
+            }
+          }}
+        >
+          <div
+            className="w-full max-w-md rounded-3xl border border-border bg-card p-6 shadow-2xl"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="payment-title"
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2 id="payment-title" className="text-xl font-black">
+                  Pagar e descarregar
+                </h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Escolha o método de pagamento e introduza o número que pretende usar.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPaymentOpen(false)}
+                className="rounded-full p-2 text-muted-foreground hover:bg-muted"
+                aria-label="Fechar"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="mt-5 rounded-2xl bg-primary/5 p-4 text-center">
+              <p className="text-xs font-semibold text-muted-foreground">
+                Valor a pagar
+              </p>
+              <p className="mt-1 text-2xl font-black text-primary">
+                {pdf.amount ?? 150} MZN
+              </p>
+            </div>
+
+            <div className="mt-5">
+              <Label>Método de pagamento</Label>
+              <div className="mt-2 grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setPaymentMethod("mpesa")}
+                  className={[
+                    "rounded-2xl border p-4 text-left transition-all",
+                    paymentMethod === "mpesa"
+                      ? "border-primary bg-primary/10 ring-2 ring-primary/20"
+                      : "border-border hover:border-primary/40",
+                  ].join(" ")}
+                >
+                  <p className="font-black">M-Pesa</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    84 ou 85
+                  </p>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setPaymentMethod("mkesh")}
+                  className={[
+                    "rounded-2xl border p-4 text-left transition-all",
+                    paymentMethod === "mkesh"
+                      ? "border-primary bg-primary/10 ring-2 ring-primary/20"
+                      : "border-border hover:border-primary/40",
+                  ].join(" ")}
+                >
+                  <p className="font-black">mKesh</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    82 ou 83
+                  </p>
+                </button>
+              </div>
+            </div>
+
+            <div className="mt-5">
+              <Label htmlFor="payment-phone">
+                Número de telemóvel
+              </Label>
+              <Input
+                id="payment-phone"
+                type="tel"
+                placeholder="Ex.: 84 000 0000"
+                value={paymentPhone}
+                onChange={(e) => setPaymentPhone(e.target.value)}
+                className="mt-1 h-11 rounded-xl"
+              />
+            </div>
+
+            {pdf.message && (
+              <p className="mt-3 text-xs text-destructive">
+                {pdf.message}
+              </p>
+            )}
+
+            <div className="mt-6 flex gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                className="flex-1"
+                disabled={pdf.busy}
+                onClick={() => setPaymentOpen(false)}
+              >
+                Cancelar
+              </Button>
+
+              <Button
+                type="button"
+                className="flex-1"
+                disabled={pdf.busy || !paymentPhone.trim()}
+                onClick={async () => {
+                  await pdf.download(
+                    paymentPhone,
+                    paymentMethod,
+                  );
+                  if (pdf.paid) {
+                    setPaymentOpen(false);
+                  }
+                }}
+              >
+                {pdf.busy ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : null}
+                {pdf.busy
+                  ? "A processar..."
+                  : `Pagar ${pdf.amount ?? 150} MZN`}
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </AppShell>
   );
 }
