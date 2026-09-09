@@ -7,6 +7,10 @@
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
 export default defineConfig({
+  // Render executes a persistent Node server from .output/server/index.mjs.
+  // Pinning this target prevents the Lovable/Cloudflare default from producing
+  // a fetch-only bundle that exits immediately when started with Node.
+  nitro: { preset: "render-com" },
   tanstackStart: {
     // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
     // nitro/vite builds from this
