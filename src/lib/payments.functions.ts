@@ -17,7 +17,6 @@ function getWalletId(walletId?: string): string {
     return wallet2;
   }
 
-  // Wallet 1 é o padrão quando nenhum é especificado.
   return wallet1 || wallet2 || "";
 }
 
@@ -211,11 +210,12 @@ export const createCvPayment = createServerFn({
     /*
      * Obtém o preço configurado.
      */
-    const { data: setting } = await context.supabase
-      .from("app_settings")
-      .select("value")
-      .eq("key", "cv_price_mzn")
-      .maybeSingle();
+    const { data: setting } =
+      await context.supabase
+        .from("app_settings")
+        .select("value")
+        .eq("key", "cv_price_mzn")
+        .maybeSingle();
 
     const amount = Number(
       setting?.value ?? 150,
@@ -308,7 +308,6 @@ export const createCvPayment = createServerFn({
           `${NETSHOP_API}/charges`,
           {
             method: "POST",
-
             headers: {
               Authorization: `Bearer ${apiKey}`,
               "X-Wallet-ID": walletId,
@@ -317,11 +316,9 @@ export const createCvPayment = createServerFn({
                 "application/json",
               Accept: "application/json",
             },
-
             body: JSON.stringify(
               chargeBody,
             ),
-
             signal: controller.signal,
           },
         );
@@ -329,20 +326,58 @@ export const createCvPayment = createServerFn({
         clearTimeout(timeout);
       }
 
-      const json =
-        (await response
-          .json()
-          .catch(() => null)) as
-          | {
-              id?: string;
-              status?: string;
-              message?: string;
-              error?: string;
-              checkout?: {
-                hosted_url?: string;
-              };
-            }
-          | null;
+      /*
+       * Lê a resposta da NetShop com segurança.
+       *
+       * Guardamos tanto o JSON como texto bruto,
+       * porque alguns erros podem não vir em JSON.
+       */
+      const responseText =
+        await response.text();
+
+      let json:
+        | {
+            id?: string;
+            status?: string;
+            amount?: number;
+            currency?: string;
+            method?: string;
+            fee?: number;
+            net?: number;
+            reference?: string;
+            message?: string;
+            error?: string;
+            code?: string;
+            reason?: string;
+            details?: unknown;
+            provider?: unknown;
+            checkout?: {
+              hosted_url?: string;
+            };
+          }
+        | null = null;
+
+      try {
+        json = responseText
+          ? JSON.parse(responseText)
+          : null;
+      } catch {
+        json = null;
+      }
+
+      /*
+       * Log detalhado da resposta da NetShop.
+       *
+       * NÃO imprimimos API key nem Wallet ID.
+       */
+      console.error(
+        "NetShop resposta:",
+        {
+          status: response.status,
+          statusText: response.statusText,
+          body: json ?? responseText,
+        },
+      );
 
       /*
        * NetShop recusou a cobrança.
@@ -350,8 +385,17 @@ export const createCvPayment = createServerFn({
       if (!response.ok) {
         console.error(
           "NetShop recusou a cobrança:",
-          response.status,
-          json,
+          {
+            httpStatus: response.status,
+            statusText: response.statusText,
+            response: json ?? responseText,
+            reference,
+            method: data.method,
+            msisdn:
+              data.method !== "card"
+                ? msisdn
+                : undefined,
+          },
         );
 
         await context.supabase
@@ -364,11 +408,16 @@ export const createCvPayment = createServerFn({
             reference,
           );
 
+        const detailedError =
+          json?.message ||
+          json?.error ||
+          json?.reason ||
+          json?.code;
+
         return {
           ok: false as const,
           error:
-            json?.message ||
-            json?.error ||
+            detailedError ||
             `NetShop recusou o pagamento (${response.status}).`,
         };
       }
