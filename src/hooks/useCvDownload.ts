@@ -189,16 +189,18 @@ export function useCvDownload() {
        * antes de chegar à NetShop.
        */
       const selectedMethod =
-        detectMobilePaymentMethod(
-          normalizedPhone,
-        );
+  method === "mpesa" || method === "mkesh"
+    ? method
+    : detectMobilePaymentMethod(
+        normalizedPhone,
+      );
 
-      if (!selectedMethod) {
-        setMessage(
-          "Número não compatível. M-Pesa aceita 84 ou 85. mKesh aceita 82 ou 83.",
-        );
-        return;
-      }
+if (!selectedMethod) {
+  setMessage(
+    "Escolha M-Pesa ou mKesh para continuar.",
+  );
+  return;
+}
 
       setBusy(true);
       setMessage("");
