@@ -3,7 +3,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const NETSHOP_API = "https://www.netshop.co.mz/api/v1";
 
-type PaymentMethod = "mpesa" | "emola" | "mkesh" | "card";
+type PaymentMethod = "mpesa" | "mkesh" | "card";
 
 function getWalletId(walletId?: string): string {
   const wallet1 = process.env["NETSHOP_WALLET_ID_1"];
@@ -44,7 +44,6 @@ function normalizeMsisdn(raw: string): string | null {
 
 const METHOD_PREFIXES: Record<string, string[]> = {
   mpesa: ["84", "85"],
-  emola: ["86", "87"],
   mkesh: ["82", "83"],
 };
 
@@ -182,9 +181,7 @@ export const createCvPayment = createServerFn({
             `Número não compatível: ${
               data.method === "mpesa"
                 ? "M-Pesa aceita 84 ou 85"
-                : data.method === "emola"
-                  ? "e-Mola aceita 86 ou 87"
-                  : "mKesh aceita 82 ou 83"
+                : "mKesh aceita 82 ou 83"
             }.`,
         };
       }
