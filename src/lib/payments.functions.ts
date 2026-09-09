@@ -5,18 +5,29 @@ const NETSHOP_API = "https://www.netshop.co.mz/api/v1";
 
 type PaymentMethod = "mpesa" | "mkesh" | "card";
 
-function getWalletId(walletId?: string): string {
+function getWalletId(
+  method: PaymentMethod,
+  walletId?: string,
+): string {
   const wallet1 = process.env["NETSHOP_WALLET_ID_1"];
   const wallet2 = process.env["NETSHOP_WALLET_ID_2"];
 
-  if (walletId && walletId === wallet1) {
-    return wallet1;
+  // Permite um Wallet ID explicitamente fornecido apenas
+  // se ele corresponder a um dos wallets configurados.
+  if (walletId && (walletId === wallet1 || walletId === wallet2)) {
+    return walletId;
   }
 
-  if (walletId && walletId === wallet2) {
-    return wallet2;
+  // Cada método usa o Wallet ID correspondente.
+  if (method === "mpesa") {
+    return wallet1 || "";
   }
 
+  if (method === "mkesh") {
+    return wallet2 || "";
+  }
+
+  // Card: usa o primeiro wallet configurado.
   return wallet1 || wallet2 || "";
 }
 
