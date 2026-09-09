@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as CriarCvRouteImport } from './routes/criar-cv'
+import { Route as HealthRouteImport } from './routes/health'
 import { Route as NotificacoesRouteImport } from './routes/notificacoes'
 import { Route as PerfilRouteImport } from './routes/perfil'
 import { Route as PesquisarRouteImport } from './routes/pesquisar'
@@ -41,6 +42,11 @@ const AuthRoute = AuthRouteImport.update({
 const CriarCvRoute = CriarCvRouteImport.update({
   id: '/criar-cv',
   path: '/criar-cv',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HealthRoute = HealthRouteImport.update({
+  id: '/health',
+  path: '/health',
   getParentRoute: () => rootRouteImport,
 } as any)
 const NotificacoesRoute = NotificacoesRouteImport.update({
@@ -94,6 +100,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/criar-cv': typeof CriarCvRoute
+  '/health': typeof HealthRoute
   '/notificacoes': typeof NotificacoesRoute
   '/perfil': typeof PerfilRoute
   '/pesquisar': typeof PesquisarRoute
@@ -109,6 +116,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/criar-cv': typeof CriarCvRoute
+  '/health': typeof HealthRoute
   '/notificacoes': typeof NotificacoesRoute
   '/perfil': typeof PerfilRoute
   '/pesquisar': typeof PesquisarRoute
@@ -125,6 +133,7 @@ export interface FileRoutesById {
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/criar-cv': typeof CriarCvRoute
+  '/health': typeof HealthRoute
   '/notificacoes': typeof NotificacoesRoute
   '/perfil': typeof PerfilRoute
   '/pesquisar': typeof PesquisarRoute
@@ -142,6 +151,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/auth'
     | '/criar-cv'
+    | '/health'
     | '/notificacoes'
     | '/perfil'
     | '/pesquisar'
@@ -157,6 +167,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/auth'
     | '/criar-cv'
+    | '/health'
     | '/notificacoes'
     | '/perfil'
     | '/pesquisar'
@@ -172,6 +183,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/auth'
     | '/criar-cv'
+    | '/health'
     | '/notificacoes'
     | '/perfil'
     | '/pesquisar'
@@ -188,6 +200,7 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRoute
   AuthRoute: typeof AuthRoute
   CriarCvRoute: typeof CriarCvRoute
+  HealthRoute: typeof HealthRoute
   NotificacoesRoute: typeof NotificacoesRoute
   PerfilRoute: typeof PerfilRoute
   PesquisarRoute: typeof PesquisarRoute
@@ -227,6 +240,13 @@ declare module '@tanstack/react-router' {
       path: '/criar-cv'
       fullPath: '/criar-cv'
       preLoaderRoute: typeof CriarCvRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/health': {
+      id: '/health'
+      path: '/health'
+      fullPath: '/health'
+      preLoaderRoute: typeof HealthRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/notificacoes': {
@@ -300,6 +320,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRoute,
   AuthRoute: AuthRoute,
   CriarCvRoute: CriarCvRoute,
+  HealthRoute: HealthRoute,
   NotificacoesRoute: NotificacoesRoute,
   PerfilRoute: PerfilRoute,
   PesquisarRoute: PesquisarRoute,
