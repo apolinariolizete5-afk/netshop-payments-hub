@@ -42,6 +42,12 @@ function normalizeMsisdn(raw: string): string | null {
   return null;
 }
 
+/**
+ * Métodos móveis disponíveis na conta NetShop.
+ *
+ * M-Pesa: 84 / 85
+ * mKesh: 82 / 83
+ */
 const METHOD_PREFIXES: Record<string, string[]> = {
   mpesa: ["84", "85"],
   mkesh: ["82", "83"],
@@ -68,7 +74,10 @@ export const getCvPrice = createServerFn({
   const price = Number(data?.value ?? 150);
 
   return {
-    price: Number.isFinite(price) && price > 0 ? price : 150,
+    price:
+      Number.isFinite(price) && price > 0
+        ? price
+        : 150,
   };
 });
 
@@ -88,7 +97,10 @@ export const getCvAccess = createServerFn({
       .limit(1);
 
     if (error) {
-      console.error("Erro ao verificar acesso ao CV:", error);
+      console.error(
+        "Erro ao verificar acesso ao CV:",
+        error,
+      );
 
       return {
         paid: false,
@@ -104,10 +116,9 @@ export const getCvAccess = createServerFn({
  * Cria uma cobrança através da NetShop.
  *
  * Métodos suportados:
- * mpesa
- * emola
- * mkesh
- * card
+ * - mpesa
+ * - mkesh
+ * - card
  */
 export const createCvPayment = createServerFn({
   method: "POST",
@@ -119,7 +130,7 @@ export const createCvPayment = createServerFn({
       method: PaymentMethod;
       msisdn?: string;
       walletId?: string;
-    }) => data
+    }) => data,
   )
   .handler(async ({ data, context }) => {
     const apiKey = process.env["NETSHOP_API_KEY"];
@@ -137,7 +148,8 @@ export const createCvPayment = createServerFn({
     if (!walletId) {
       return {
         ok: false as const,
-        error: "Nenhum Wallet ID da NetShop foi configurado.",
+        error:
+          "Nenhum Wallet ID da NetShop foi configurado.",
       };
     }
 
@@ -150,6 +162,9 @@ export const createCvPayment = createServerFn({
 
     let msisdn: string | null = null;
 
+    /*
+     * Pagamentos móveis precisam de um número.
+     */
     if (data.method !== "card") {
       if (!data.msisdn) {
         return {
@@ -169,71 +184,99 @@ export const createCvPayment = createServerFn({
         };
       }
 
-      const allowed = METHOD_PREFIXES[data.method] ?? [];
+      /*
+       * Verifica se o prefixo corresponde ao método escolhido.
+       */
+      const allowed =
+        METHOD_PREFIXES[data.method] ?? [];
 
       if (
-        allowed.length &&
-        !allowed.some((p) => msisdn!.startsWith(p))
+        allowed.length > 0 &&
+        !allowed.some((prefix) =>
+          msisdn!.startsWith(prefix),
+        )
       ) {
+        const errorMessage =
+          data.method === "mpesa"
+            ? "M-Pesa aceita números 84 ou 85."
+            : "mKesh aceita números 82 ou 83.";
+
         return {
           ok: false as const,
-          error:
-            `Número não compatível: ${
-              data.method === "mpesa"
-                ? "M-Pesa aceita 84 ou 85"
-                : "mKesh aceita 82 ou 83"
-            }.`,
+          error: `Número não compatível: ${errorMessage}`,
         };
       }
     }
 
+    /*
+     * Obtém o preço configurado.
+     */
     const { data: setting } = await context.supabase
       .from("app_settings")
       .select("value")
       .eq("key", "cv_price_mzn")
       .maybeSingle();
 
-    const amount = Number(setting?.value ?? 150);
+    const amount = Number(
+      setting?.value ?? 150,
+    );
 
-    if (!Number.isFinite(amount) || amount <= 0) {
+    if (
+      !Number.isFinite(amount) ||
+      amount <= 0
+    ) {
       return {
         ok: false as const,
         error: "Preço do CV inválido.",
       };
     }
 
+    /*
+     * Cria uma referência única para o pagamento.
+     */
     const reference =
-      `CV-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+      `CV-${Date.now()}-${Math.random()
+        .toString(36)
+        .slice(2, 8)}`
         .toUpperCase();
 
-    const { error: purchaseError } = await context.supabase
-      .from("cv_purchases")
-      .insert({
-        user_id: context.userId,
-        reference,
-        amount,
-        status: "pending",
-        method: data.method,
-      });
+    /*
+     * Regista a compra como pendente.
+     */
+    const { error: purchaseError } =
+      await context.supabase
+        .from("cv_purchases")
+        .insert({
+          user_id: context.userId,
+          reference,
+          amount,
+          status: "pending",
+          method: data.method,
+        });
 
     if (purchaseError) {
       console.error(
         "Erro ao criar compra:",
-        purchaseError
+        purchaseError,
       );
 
       return {
         ok: false as const,
-        error: "Não foi possível criar o pedido de pagamento.",
+        error:
+          "Não foi possível criar o pedido de pagamento.",
       };
     }
 
+    /*
+     * Corpo enviado para a NetShop.
+     */
     const chargeBody: Record<string, unknown> = {
       amount,
       currency: "MZN",
       method: data.method,
       reference,
-      description: "Download de CV - Moza Empregos",
+      description:
+        "Download de CV - Moza Empregos",
       return_url: data.returnUrl,
       metadata: {
         product: "cv_download",
@@ -246,12 +289,13 @@ export const createCvPayment = createServerFn({
     }
 
     try {
-      /**
+      /*
        * Timeout de segurança:
        * evita que a Server Function fique pendurada
        * indefinidamente caso a NetShop não responda.
        */
-      const controller = new AbortController();
+      const controller =
+        new AbortController();
 
       const timeout = setTimeout(() => {
         controller.abort();
@@ -269,38 +313,45 @@ export const createCvPayment = createServerFn({
               Authorization: `Bearer ${apiKey}`,
               "X-Wallet-ID": walletId,
               "Idempotency-Key": reference,
-              "Content-Type": "application/json",
+              "Content-Type":
+                "application/json",
               Accept: "application/json",
             },
 
-            body: JSON.stringify(chargeBody),
+            body: JSON.stringify(
+              chargeBody,
+            ),
 
             signal: controller.signal,
-          }
+          },
         );
       } finally {
         clearTimeout(timeout);
       }
 
-      const json = (await response
-        .json()
-        .catch(() => null)) as
-        | {
-            id?: string;
-            status?: string;
-            message?: string;
-            error?: string;
-            checkout?: {
-              hosted_url?: string;
-            };
-          }
-        | null;
+      const json =
+        (await response
+          .json()
+          .catch(() => null)) as
+          | {
+              id?: string;
+              status?: string;
+              message?: string;
+              error?: string;
+              checkout?: {
+                hosted_url?: string;
+              };
+            }
+          | null;
 
+      /*
+       * NetShop recusou a cobrança.
+       */
       if (!response.ok) {
         console.error(
           "NetShop recusou a cobrança:",
           response.status,
-          json
+          json,
         );
 
         await context.supabase
@@ -308,7 +359,10 @@ export const createCvPayment = createServerFn({
           .update({
             status: "failed",
           })
-          .eq("reference", reference);
+          .eq(
+            "reference",
+            reference,
+          );
 
         return {
           ok: false as const,
@@ -319,18 +373,25 @@ export const createCvPayment = createServerFn({
         };
       }
 
-      const chargeId = json?.id ?? null;
+      const chargeId =
+        json?.id ?? null;
 
       const chargeStatus =
         json?.status ?? "pending";
 
+      /*
+       * Guarda o ID da cobrança da NetShop.
+       */
       await context.supabase
         .from("cv_purchases")
         .update({
           provider_id: chargeId,
           method: data.method,
         })
-        .eq("reference", reference);
+        .eq(
+          "reference",
+          reference,
+        );
 
       return {
         ok: true as const,
@@ -338,12 +399,13 @@ export const createCvPayment = createServerFn({
         chargeId,
         status: chargeStatus,
         checkoutUrl:
-          json?.checkout?.hosted_url ?? null,
+          json?.checkout?.hosted_url ??
+          null,
       };
     } catch (error) {
       console.error(
         "Erro de comunicação com NetShop:",
-        error
+        error,
       );
 
       await context.supabase
@@ -351,7 +413,10 @@ export const createCvPayment = createServerFn({
         .update({
           status: "failed",
         })
-        .eq("reference", reference);
+        .eq(
+          "reference",
+          reference,
+        );
 
       return {
         ok: false as const,
