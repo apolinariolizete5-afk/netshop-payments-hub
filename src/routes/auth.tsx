@@ -6,7 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useServerFn } from "@tanstack/react-start";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { amIAdmin, claimFirstAdmin, publicAdminExists } from "@/lib/admin.functions";
 import { lovable } from "@/integrations/lovable/index";
 import { useSession } from "@/hooks/useSession";
 
@@ -37,10 +40,24 @@ function AuthPage() {
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [busy, setBusy] = useState(false);
+  const checkAdmin = useServerFn(amIAdmin);
+  const adminExistsFn = useServerFn(publicAdminExists);
+  const claimAdmin = useServerFn(claimFirstAdmin);
+  const adminExists = useQuery({ queryKey: ["admin-exists"], queryFn: () => adminExistsFn({}) });
+
+  const goAfterLogin = async () => {
+    try {
+      const isAdmin = await checkAdmin({});
+      navigate({ to: isAdmin ? "/admin" : "/perfil" });
+      return;
+    } catch {
+      navigate({ to: "/perfil" });
+    }
+  };
 
   useEffect(() => {
-    if (!loading && user) navigate({ to: "/perfil", replace: true });
-  }, [loading, user, navigate]);
+    if (!loading && user && adminExists.data !== false) navigate({ to: "/perfil", replace: true });
+  }, [loading, user, adminExists.data, navigate]);
 
   const signIn = async (event: FormEvent) => {
     event.preventDefault();
@@ -51,7 +68,7 @@ function AuthPage() {
       toast.error(error.message);
       return;
     }
-    navigate({ to: "/perfil" });
+    void goAfterLogin();
   };
 
   const signUp = async (event: FormEvent) => {
@@ -74,7 +91,7 @@ function AuthPage() {
       toast.success("Conta criada! Confirme o seu email para entrar.");
       return;
     }
-    navigate({ to: "/perfil" });
+    void goAfterLogin();
   };
 
   const signInWithGoogle = async () => {
@@ -86,7 +103,7 @@ function AuthPage() {
       return;
     }
     if (result.redirected) return;
-    navigate({ to: "/perfil" });
+    void goAfterLogin();
   };
 
   return (
@@ -181,6 +198,30 @@ function AuthPage() {
             Continuar com Google
           </Button>
         </div>
+
+        {user && adminExists.data === false ? (
+          <div className="mt-4 rounded-2xl border border-border bg-card p-4 text-center">
+            <p className="text-sm font-semibold">Ainda não existe administrador</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Esta opção aparece apenas uma vez. Depois, novos administradores entram por convite.
+            </p>
+            <Button
+              className="mt-3 w-full"
+              onClick={async () => {
+                const ok = await claimAdmin({});
+                if (!ok) {
+                  toast.error("Já existe um administrador.");
+                  await adminExists.refetch();
+                  return;
+                }
+                toast.success("É agora administrador.");
+                navigate({ to: "/admin" });
+              }}
+            >
+              Tornar-me administrador
+            </Button>
+          </div>
+        ) : null}
 
         <p className="mt-4 text-center text-xs text-muted-foreground">
           Ao continuar concorda com os termos do Moza Empregos.

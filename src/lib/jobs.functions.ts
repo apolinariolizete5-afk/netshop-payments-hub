@@ -90,7 +90,7 @@ export const listJobs = createServerFn({ method: "GET" })
   });
 
 export const getJobBySlug = createServerFn({ method: "GET" })
-  .inputValidator((input: { slug: string }) => input)
+  .inputValidator((input: { slug: string }) => ({ slug: input.slug.replace(/\.html$/i, "") }))
   .handler(async ({ data }): Promise<JobDetail | null> => {
     const { getPublicSupabase } = await import("./supabase-public.server");
     const supabase = getPublicSupabase();
@@ -201,7 +201,7 @@ export const listCompanies = createServerFn({ method: "GET" })
   });
 
 export const getCompanyBySlug = createServerFn({ method: "GET" })
-  .inputValidator((input: { slug: string }) => input)
+  .inputValidator((input: { slug: string }) => ({ slug: input.slug.replace(/\.html$/i, "") }))
   .handler(
     async ({ data }): Promise<{ company: CompanyListItem; jobs: JobListItem[] } | null> => {
       const { getPublicSupabase } = await import("./supabase-public.server");
@@ -230,7 +230,7 @@ export const getCompanyBySlug = createServerFn({ method: "GET" })
   );
 
 export const registerJobView = createServerFn({ method: "POST" })
-  .inputValidator((input: { slug: string }) => input)
+  .inputValidator((input: { slug: string }) => ({ slug: input.slug.replace(/\.html$/i, "") }))
   .handler(async ({ data }) => {
     const { getPublicSupabase } = await import("./supabase-public.server");
     await getPublicSupabase().rpc("increment_job_view", { _slug: data.slug });

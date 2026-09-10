@@ -205,3 +205,34 @@ export const adminDeleteUser = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+// ---- Acesso de administração: primeiro admin + convites ----
+
+export const publicAdminExists = createServerFn({ method: "GET" }).handler(
+  async (): Promise<boolean> => {
+    const { getPublicSupabase } = await import("./supabase-public.server");
+    const { data } = await getPublicSupabase().rpc("admin_exists");
+    return Boolean(data);
+  },
+);
+
+export const claimFirstAdmin = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<boolean> => {
+    const { data, error } = await context.supabase.rpc("claim_first_admin");
+    if (error) throw new Error(error.message);
+    return Boolean(data);
+  });
+
+export const adminInviteByEmail = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { email: string }) => input)
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context as any);
+    const { data: ok, error } = await context.supabase.rpc("grant_admin_by_email", {
+      _email: data.email.trim(),
+    });
+    if (error) throw new Error(error.message);
+    if (!ok) throw new Error("Não existe nenhuma conta com esse email.");
+    return { ok: true };
+  });

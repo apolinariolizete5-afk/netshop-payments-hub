@@ -7,6 +7,7 @@ import {
   JOB_TYPE_LABELS,
   formatSalary,
   timeAgo,
+  jobSlugHtml,
   type JobListItem,
 } from "@/lib/jobs.types";
 
@@ -22,7 +23,14 @@ export function JobCard({ job }: { job: JobListItem }) {
           loading="lazy"
           className="mb-3 h-32 w-full rounded-xl object-cover sm:h-40"
         />
-      ) : null}
+      ) : (
+        <div className="mb-3 grid h-32 w-full place-items-center rounded-xl bg-gradient-to-br from-primary to-primary-deep px-4 text-center text-primary-foreground sm:h-40">
+          <div>
+            <p className="text-lg font-extrabold leading-tight">{job.company_name}</p>
+            <p className="mt-1 text-xs opacity-90">{job.category}</p>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2">
         <div className="flex min-w-0 items-start gap-3">
@@ -42,7 +50,7 @@ export function JobCard({ job }: { job: JobListItem }) {
             <h3 className="truncate text-base font-bold leading-snug">
               <Link
                 to="/vagas/$slug"
-                params={{ slug: job.slug }}
+                params={{ slug: jobSlugHtml(job.slug) }}
                 className="after:absolute after:inset-0 after:content-['']"
               >
                 {job.title}
@@ -83,7 +91,7 @@ export function JobCard({ job }: { job: JobListItem }) {
       <div className="mt-4">
         <Link
           to="/vagas/$slug"
-          params={{ slug: job.slug }}
+          params={{ slug: jobSlugHtml(job.slug) }}
           className="relative z-10 inline-flex h-10 items-center justify-center rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-deep"
         >
           Ver vaga
