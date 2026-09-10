@@ -11,7 +11,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/useSession";
 import { useApplications, useSavedJobs } from "@/hooks/useUserJobs";
-import { timeAgo } from "@/lib/jobs.types";
+import { timeAgo
+  jobSlugHtml,
+} from "@/lib/jobs.types";
 
 export const Route = createFileRoute("/perfil")({
   ssr: false,
@@ -186,7 +188,7 @@ function PerfilPage() {
                   <li key={row.job_id} className="rounded-2xl border border-border bg-card p-4">
                     <Link
                       to="/vagas/$slug"
-                      params={{ slug: job.slug }}
+                      params={{ slug: jobSlugHtml(job.slug) }}
                       className="text-sm font-bold hover:underline"
                     >
                       {job.title}
@@ -217,7 +219,7 @@ function PerfilPage() {
                     {job ? (
                       <Link
                         to="/vagas/$slug"
-                        params={{ slug: job.slug }}
+                        params={{ slug: jobSlugHtml(job.slug) }}
                         className="text-sm font-bold hover:underline"
                       >
                         {job.title}

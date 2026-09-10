@@ -114,3 +114,8 @@ export function timeAgo(iso: string): string {
   if (months < 12) return `Há ${months} ${months === 1 ? "mês" : "meses"}`;
   return new Date(iso).toLocaleDateString("pt-MZ");
 }
+
+/** Endereço público de uma vaga: /vagas/<slug>.html */
+export function jobSlugHtml(slug: string) {
+  return slug.endsWith(".html") ? slug : `${slug}.html`;
+}
