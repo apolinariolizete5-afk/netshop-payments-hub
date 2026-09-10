@@ -225,8 +225,8 @@ export const claimFirstAdmin = createServerFn({ method: "POST" })
   });
 
 export const adminInviteByEmail = createServerFn({ method: "POST" })
-  .inputValidator((input: { email: string }) => input)
   .middleware([requireSupabaseAuth])
+  .inputValidator((input: { email: string }) => input)
   .handler(async ({ data, context }) => {
     await assertAdmin(context as any);
     const { data: ok, error } = await context.supabase.rpc("grant_admin_by_email", {
