@@ -11,9 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/useSession";
 import { useApplications, useSavedJobs } from "@/hooks/useUserJobs";
-import { timeAgo
-  jobSlugHtml,
-} from "@/lib/jobs.types";
+import { timeAgo, jobSlugHtml } from "@/lib/jobs.types";
 
 export const Route = createFileRoute("/perfil")({
   ssr: false,
