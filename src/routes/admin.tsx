@@ -19,6 +19,7 @@ import {
   adminListUsers,
   adminOverview,
   adminSaveJob,
+  adminInviteByEmail,
   adminSetRole,
   amIAdmin,
   type AdminJobInput,
@@ -480,6 +481,18 @@ function UsersManager() {
   const list = useServerFn(adminListUsers);
   const setRole = useServerFn(adminSetRole);
   const del = useServerFn(adminDeleteUser);
+  const invite = useServerFn(adminInviteByEmail);
+  const [inviteEmail, setInviteEmail] = useState("");
+
+  const inviteMutation = useMutation({
+    mutationFn: (email: string) => invite({ data: { email } }),
+    onSuccess: () => {
+      toast.success("Administrador convidado");
+      setInviteEmail("");
+      void qc.invalidateQueries({ queryKey: ["admin-users"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
   const users = useQuery({ queryKey: ["admin-users"], queryFn: () => list({}) });
 
   const roleMutation = useMutation({
@@ -501,7 +514,26 @@ function UsersManager() {
   });
 
   return (
-    <ul className="space-y-2">
+    <div className="space-y-3">
+      <div className="rounded-2xl border border-border bg-card p-3">
+        <Label htmlFor="invite-email">Convidar administrador (email da conta existente)</Label>
+        <div className="mt-2 flex gap-2">
+          <Input
+            id="invite-email"
+            type="email"
+            placeholder="nome@email.com"
+            value={inviteEmail}
+            onChange={(e) => setInviteEmail(e.target.value)}
+          />
+          <Button
+            disabled={!inviteEmail || inviteMutation.isPending}
+            onClick={() => inviteMutation.mutate(inviteEmail)}
+          >
+            Convidar
+          </Button>
+        </div>
+      </div>
+      <ul className="space-y-2">
       {(users.data ?? []).map((u) => (
         <li key={u.id} className="rounded-2xl border border-border bg-card p-3">
           <p className="font-semibold">{u.full_name || "Sem nome"}</p>
@@ -536,7 +568,8 @@ function UsersManager() {
           </div>
         </li>
       ))}
-    </ul>
+      </ul>
+    </div>
   );
 }
 
