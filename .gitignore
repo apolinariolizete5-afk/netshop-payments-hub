@@ -16,6 +16,15 @@ dist-ssr
 .nitro
 *.local
 
+# Capacitor
+capacitor.config.json
+ios/
+android/app/build
+android/.gradle
+android/.idea
+android/local.properties
+android/app/release-key.jks
+
 # Wrangler / Cloudflare
 .wrangler/
 .dev.vars
