@@ -10,12 +10,20 @@
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "lint": "eslint .",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "android:build": "npm run build && npx cap sync android && npx cap build android --keystorePath=./android/app/release-key.jks --keystoreAlias=netshop --keystorePassword=$ANDROID_KEYSTORE_PASSWORD --apkSigningMethod=jarsigner",
+    "android:sync": "npx cap sync android",
+    "android:open": "npx cap open android",
+    "android:run": "npx cap run android"
   },
   "overrides": {
     "rolldown": "1.2.1"
   },
   "dependencies": {
+    "@capacitor/android": "^6.1.0",
+    "@capacitor/app": "^6.0.1",
+    "@capacitor/core": "^6.1.0",
+    "@capacitor/status-bar": "^6.0.1",
     "@hookform/resolvers": "^5.2.2",
     "@lovable.dev/cloud-auth-js": "^1.2.0",
     "@radix-ui/react-accordion": "^1.2.12",
@@ -72,6 +80,7 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@capacitor/cli": "^6.1.0",
     "@eslint/js": "^9.32.0",
     "@lovable.dev/vite-tanstack-config": "^2.20.0",
     "@types/node": "^22.16.5",
