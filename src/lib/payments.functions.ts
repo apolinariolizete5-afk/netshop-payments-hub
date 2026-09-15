@@ -117,7 +117,7 @@ export const getCvPrice = createServerFn({
       .maybeSingle();
 
   const price = Number(
-    data?.value ?? 150,
+    data?.value ?? 75,
   );
 
   return {
@@ -125,7 +125,7 @@ export const getCvPrice = createServerFn({
       Number.isFinite(price) &&
       price > 0
         ? price
-        : 150,
+        : 75,
   };
 });
 
@@ -151,6 +151,13 @@ export const getCvAccess = createServerFn({
      * =====================================================
      * 1. CONTA DE TESTE
      * =====================================================
+     *
+     * A conta definida em CV_TEST_ADMIN_EMAIL
+     * pode baixar o CV sem realizar pagamento.
+     *
+     * Não usamos supabaseAdmin aqui.
+     * O próprio cliente autenticado informa o utilizador
+     * atualmente conectado.
      */
 
     const testAdminEmail =
@@ -160,24 +167,10 @@ export const getCvAccess = createServerFn({
 
     if (testAdminEmail) {
       try {
-        /*
-         * IMPORTANTE:
-         * usamos supabaseAdmin porque auth.admin
-         * precisa de privilégios administrativos.
-         */
-        const {
-          supabaseAdmin,
-        } = await import(
-          "@/integrations/supabase/client.server"
-        );
-
         const {
           data: { user },
           error: userError,
-        } =
-          await supabaseAdmin.auth.admin.getUserById(
-            context.userId,
-          );
+        } = await context.supabase.auth.getUser();
 
         if (userError) {
           console.error(
