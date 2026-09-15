@@ -1,4 +1,11 @@
+import type { CSSProperties, ReactNode } from "react";
 import type { CvData, CvTemplate } from "@/lib/cv";
+
+type Props = {
+  data: CvData;
+  template: CvTemplate;
+  id?: string;
+};
 
 function list(value: string) {
   return value
@@ -16,1642 +23,707 @@ function initials(name: string) {
     .join("");
 }
 
+const gold = "#A58C62";
+const goldDark = "#8D754D";
+const goldLight = "#B9A47F";
+
+function Section({
+  title,
+  children,
+  color = gold,
+  dark = false,
+}: {
+  title: string;
+  children: ReactNode;
+  color?: string;
+  dark?: boolean;
+}) {
+  return (
+    <section style={{ marginBottom: 24 }}>
+      <h2
+        style={{
+          margin: 0,
+          fontSize: 14,
+          lineHeight: 1.1,
+          fontWeight: 800,
+          letterSpacing: "0.04em",
+          color: dark ? "#fff" : color,
+          fontFamily: "Arial, Helvetica, sans-serif",
+        }}
+      >
+        {title.toUpperCase()}
+      </h2>
+
+      <div
+        style={{
+          width: "100%",
+          height: 1.5,
+          marginTop: 8,
+          marginBottom: 12,
+          background: dark
+            ? "rgba(255,255,255,.35)"
+            : color,
+        }}
+      />
+
+      {children}
+    </section>
+  );
+}
+
+function Contact({
+  data,
+  dark = false,
+  compact = false,
+}: {
+  data: CvData;
+  dark?: boolean;
+  compact?: boolean;
+}) {
+  const color = dark ? "rgba(255,255,255,.78)" : goldLight;
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: compact ? 6 : 9,
+        fontSize: compact ? 8.5 : 10,
+        color,
+        fontFamily: "Arial, Helvetica, sans-serif",
+      }}
+    >
+      {data.phone && (
+        <div style={{ display: "flex", gap: 7, alignItems: "center" }}>
+          <span
+            style={{
+              width: 17,
+              height: 17,
+              borderRadius: "50%",
+              background: dark ? "#fff" : goldDark,
+              color: dark ? "#172033" : "#fff",
+              display: "inline-flex",
+              justifyContent: "center",
+              alignItems: "center",
+              fontSize: 8,
+              fontWeight: 800,
+            }}
+          >
+            ☎
+          </span>
+          <span>{data.phone}</span>
+        </div>
+      )}
+
+      {data.email && (
+        <div style={{ display: "flex", gap: 7, alignItems: "center" }}>
+          <span
+            style={{
+              width: 17,
+              height: 17,
+              borderRadius: "50%",
+              background: dark ? "#fff" : goldDark,
+              color: dark ? "#172033" : "#fff",
+              display: "inline-flex",
+              justifyContent: "center",
+              alignItems: "center",
+              fontSize: 8,
+              fontWeight: 800,
+            }}
+          >
+            ✉
+          </span>
+          <span>{data.email}</span>
+        </div>
+      )}
+
+      {data.location && (
+        <div style={{ display: "flex", gap: 7, alignItems: "center" }}>
+          <span
+            style={{
+              width: 17,
+              height: 17,
+              borderRadius: "50%",
+              background: dark ? "#fff" : goldDark,
+              color: dark ? "#172033" : "#fff",
+              display: "inline-flex",
+              justifyContent: "center",
+              alignItems: "center",
+              fontSize: 8,
+              fontWeight: 800,
+            }}
+          >
+            ●
+          </span>
+          <span>{data.location}</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function WaveDecoration({
+  position = "top",
+  color = gold,
+}: {
+  position?: "top" | "bottom";
+  color?: string;
+}) {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 320 260"
+      style={{
+        position: "absolute",
+        pointerEvents: "none",
+        zIndex: 0,
+        width: 300,
+        height: 245,
+        right: position === "top" ? -25 : -35,
+        top: position === "top" ? -18 : undefined,
+        bottom: position === "bottom" ? -45 : undefined,
+        opacity: 0.55,
+        transform:
+          position === "bottom"
+            ? "rotate(180deg)"
+            : "none",
+      }}
+    >
+      {Array.from({ length: 13 }).map((_, i) => {
+        const y = 22 + i * 15;
+
+        return (
+          <path
+            key={i}
+            d={`M55 ${y}
+              C100 ${y - 10}
+              125 ${y + 15}
+              155 ${y + 28}
+              C195 ${y + 45}
+              220 ${y + 65}
+              285 ${y + 70}`}
+            fill="none"
+            stroke={color}
+            strokeWidth="1.2"
+          />
+        );
+      })}
+    </svg>
+  );
+}
+
+function Experience({
+  data,
+  color = goldDark,
+  arrow = true,
+  timeline = false,
+  dark = false,
+}: {
+  data: CvData;
+  color?: string;
+  arrow?: boolean;
+  timeline?: boolean;
+  dark?: boolean;
+}) {
+  const items = data.experiences.filter(
+    (item) =>
+      item.role ||
+      item.company ||
+      item.period ||
+      item.description,
+  );
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: 13,
+        position: "relative",
+        paddingLeft: timeline ? 15 : 0,
+        borderLeft: timeline
+          ? `1.5px solid ${color}55`
+          : undefined,
+      }}
+    >
+      {items.map((item, index) => (
+        <article
+          key={index}
+          style={{
+            position: "relative",
+            paddingLeft: arrow && !timeline ? 0 : 0,
+          }}
+        >
+          {timeline && (
+            <span
+              style={{
+                position: "absolute",
+                left: -20,
+                top: 4,
+                width: 8,
+                height: 8,
+                borderRadius: "50%",
+                background: color,
+              }}
+            />
+          )}
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns:
+                arrow && !timeline
+                  ? "13px 1fr auto"
+                  : "1fr auto",
+              gap: 3,
+              alignItems: "baseline",
+            }}
+          >
+            {arrow && !timeline && (
+              <span
+                style={{
+                  color,
+                  fontSize: 10,
+                  fontWeight: 900,
+                }}
+              >
+                ➤
+              </span>
+            )}
+
+            <strong
+              style={{
+                fontSize: 13,
+                lineHeight: 1.15,
+                color: dark ? "#fff" : color,
+                fontFamily:
+                  "Arial, Helvetica, sans-serif",
+              }}
+            >
+              {item.role || "Função"}
+            </strong>
+
+            {item.period && (
+              <span
+                style={{
+                  fontSize: 8.5,
+                  color: dark
+                    ? "rgba(255,255,255,.65)"
+                    : gold,
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {item.period}
+              </span>
+            )}
+          </div>
+
+          {item.company && (
+            <div
+              style={{
+                marginTop: 3,
+                marginLeft:
+                  arrow && !timeline ? 16 : 0,
+                fontSize: 8.5,
+                fontWeight: 800,
+                color: dark ? "#fff" : "#292929",
+              }}
+            >
+              {item.company}
+            </div>
+          )}
+
+          {item.description && (
+            <p
+              style={{
+                margin:
+                  arrow && !timeline
+                    ? "4px 0 0 16px"
+                    : "4px 0 0",
+                fontSize: 9,
+                lineHeight: 1.45,
+                color: dark
+                  ? "rgba(255,255,255,.72)"
+                  : "#8F7959",
+              }}
+            >
+              {item.description}
+            </p>
+          )}
+        </article>
+      ))}
+    </div>
+  );
+}
+
+function Education({
+  data,
+  color = goldDark,
+  dark = false,
+}: {
+  data: CvData;
+  color?: string;
+  dark?: boolean;
+}) {
+  const items = data.education.filter(
+    (item) =>
+      item.course ||
+      item.school ||
+      item.period,
+  );
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: 9,
+      }}
+    >
+      {items.map((item, index) => (
+        <div key={index}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              gap: 10,
+              alignItems: "baseline",
+            }}
+          >
+            <strong
+              style={{
+                fontSize: 9.5,
+                color: dark ? "#fff" : color,
+              }}
+            >
+              {item.course || "Formação"}
+            </strong>
+
+            {item.period && (
+              <span
+                style={{
+                  fontSize: 8,
+                  color: dark
+                    ? "rgba(255,255,255,.6)"
+                    : gold,
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {item.period}
+              </span>
+            )}
+          </div>
+
+          {item.school && (
+            <p
+              style={{
+                margin: "2px 0 0",
+                fontSize: 8.5,
+                color: dark
+                  ? "rgba(255,255,255,.62)"
+                  : "#9C855F",
+              }}
+            >
+              {item.school}
+            </p>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function Skills({
+  data,
+  color = goldDark,
+  dark = false,
+  bars = false,
+}: {
+  data: CvData;
+  color?: string;
+  dark?: boolean;
+  bars?: boolean;
+}) {
+  const items = list(data.skills);
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: 7,
+      }}
+    >
+      {items.map((skill, index) => (
+        <div key={`${skill}-${index}`}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 7,
+              fontSize: 9,
+              color: dark
+                ? "rgba(255,255,255,.78)"
+                : "#9B845E",
+            }}
+          >
+            <span
+              style={{
+                color,
+                fontSize: 8,
+              }}
+            >
+              ➤
+            </span>
+
+            <span>{skill}</span>
+          </div>
+
+          {bars && (
+            <div
+              style={{
+                marginTop: 3,
+                marginLeft: 15,
+                height: 3,
+                background: dark
+                  ? "rgba(255,255,255,.12)"
+                  : `${color}18`,
+                borderRadius: 4,
+              }}
+            >
+              <div
+                style={{
+                  width: `${Math.max(
+                    45,
+                    94 - index * 8,
+                  )}%`,
+                  height: "100%",
+                  background: color,
+                  borderRadius: 4,
+                }}
+              />
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function Languages({
+  data,
+  color = goldDark,
+  dark = false,
+}: {
+  data: CvData;
+  color?: string;
+  dark?: boolean;
+}) {
+  const items = list(data.languages);
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: 7,
+      }}
+    >
+      {items.map((language, index) => (
+        <div
+          key={`${language}-${index}`}
+          style={{
+            display: "flex",
+            gap: 7,
+            alignItems: "center",
+            fontSize: 9,
+            color: dark
+              ? "rgba(255,255,255,.78)"
+              : "#9B845E",
+          }}
+        >
+          <span
+            style={{
+              color,
+              fontSize: 8,
+            }}
+          >
+            ➤
+          </span>
+
+          <span>{language}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function Photo({
+  data,
+  size = 90,
+  circle = false,
+  accent = gold,
+  dark = false,
+}: {
+  data: CvData;
+  size?: number;
+  circle?: boolean;
+  accent?: string;
+  dark?: boolean;
+}) {
+  const name = data.fullName || "CV";
+
+  const style: CSSProperties = {
+    width: size,
+    height: size,
+    flexShrink: 0,
+    objectFit: "cover",
+    borderRadius: circle ? "50%" : 8,
+    border: `2px solid ${accent}`,
+  };
+
+  if (data.photo) {
+    return (
+      <img
+        src={data.photo}
+        alt=""
+        style={style}
+      />
+    );
+  }
+
+  return (
+    <div
+      style={{
+        ...style,
+        display: "grid",
+        placeItems: "center",
+        background: dark
+          ? "rgba(255,255,255,.08)"
+          : `${accent}12`,
+        color: accent,
+        fontSize: size / 3,
+        fontWeight: 800,
+      }}
+    >
+      {initials(name)}
+    </div>
+  );
+}
+
+function BasePage({
+  children,
+  background = "#fff",
+  id,
+}: {
+  children: ReactNode;
+  background?: string;
+  id?: string;
+}) {
+  return (
+    <div
+      id={id}
+      className="moza-cv-page"
+      style={{
+        position: "relative",
+        width: "100%",
+        maxWidth: 794,
+        minHeight: 1123,
+        margin: "0 auto",
+        overflow: "hidden",
+        background,
+        color: "#222",
+        boxShadow:
+          "0 8px 30px rgba(0,0,0,.08)",
+        fontFamily:
+          "Arial, Helvetica, sans-serif",
+      }}
+    >
+      {children}
+
+      <style>{`
+        @media print {
+          body {
+            margin: 0 !important;
+            padding: 0 !important;
+            background: white !important;
+          }
+
+          .moza-cv-page {
+            width: 210mm !important;
+            max-width: 210mm !important;
+            min-height: 297mm !important;
+            margin: 0 !important;
+            box-shadow: none !important;
+            page-break-after: always;
+          }
+        }
+      `}</style>
+    </div>
+  );
+}
+
 export function CvPreview({
   data,
   template,
   id,
-}: {
-  data: CvData;
-  template: CvTemplate;
-  id?: string;
-}) {
-  const accent = template.accent;
-  const surface = template.surface;
-  const serif = template.font === "serif";
-  const display = template.font === "display";
+}: Props) {
+  const name =
+    data.fullName || "O SEU NOME";
 
-  const name = data.fullName || "O seu nome";
-  const title = data.title || "Profissional";
-  const contacts = [data.email, data.phone, data.location].filter(Boolean);
-  const skills = list(data.skills);
-  const languages = list(data.languages);
-
-  const experiences = data.experiences.filter(
-    (e) => e.role || e.company || e.description,
-  );
-
-  const education = data.education.filter(
-    (e) => e.course || e.school || e.period,
-  );
-
-  const bodyFont = serif
-    ? "Georgia, 'Times New Roman', serif"
-    : "Inter, Arial, sans-serif";
-
-  const headingFont = display
-    ? "Arial, Helvetica, sans-serif"
-    : bodyFont;
-
-  const Photo = ({
-    size = 96,
-    shape,
-    ring,
-  }: {
-    size?: number;
-    shape?: "circle" | "square" | "arch" | "none";
-    ring?: string;
-  }) => {
-    const currentShape = shape ?? template.photoShape;
-
-    if (currentShape === "none") {
-      return null;
-    }
-
-    const borderRadius =
-      currentShape === "circle"
-        ? "9999px"
-        : currentShape === "arch"
-          ? `${size / 2}px ${size / 2}px 14px 14px`
-          : "12px";
-
-    const style: React.CSSProperties = {
-      width: size,
-      height: size,
-      borderRadius,
-      objectFit: "cover",
-      flexShrink: 0,
-      border: ring ? `3px solid ${ring}` : undefined,
-    };
-
-    if (data.photo) {
-      return <img src={data.photo} alt={name} style={style} />;
-    }
-
-    return (
-      <div
-        aria-hidden
-        style={{
-          ...style,
-          background: `${accent}18`,
-          display: "grid",
-          placeItems: "center",
-        }}
-      >
-        <span
-          style={{
-            color: accent,
-            fontSize: size / 3.3,
-            fontWeight: 800,
-          }}
-        >
-          {initials(name)}
-        </span>
-      </div>
-    );
-  };
-
-  const SectionTitle = ({
-    children,
-    color = accent,
-    number,
-    light = false,
-  }: {
-    children: React.ReactNode;
-    color?: string | undefined;
-    number?: string | undefined;
-    light?: boolean | undefined;
-  }) => (
-    <div className="flex items-center gap-2">
-      {number && (
-        <span
-          className="text-[9px] font-bold tracking-widest"
-          style={{ color }}
-        >
-          {number}
-        </span>
-      )}
-
-      <h3
-        className="text-[10px] font-bold uppercase tracking-[0.22em]"
-        style={{
-          color: light ? "rgba(255,255,255,.75)" : color,
-          fontFamily: headingFont,
-        }}
-      >
-        {children}
-      </h3>
-    </div>
-  );
-
-  const Line = ({
-    color = accent,
-  }: {
-    color?: string | undefined;
-  }) => (
-    <div
-      className="mt-2 h-px w-full"
-      style={{ backgroundColor: `${color}35` }}
-    />
-  );
-
-  const Summary = ({
-    color = accent,
-    number,
-    light = false,
-  }: {
-    color?: string | undefined;
-    number?: string | undefined;
-    light?: boolean | undefined;
-  }) =>
-    data.summary ? (
-      <section className="mt-5">
-        <SectionTitle
-          color={color}
-          number={number}
-          light={light}
-        >
-          Perfil
-        </SectionTitle>
-
-        <Line color={color} />
-
-        <p
-          className="mt-2 text-[10.5px] leading-[1.55]"
-          style={{
-            color: light
-              ? "rgba(255,255,255,.75)"
-              : "#404040",
-          }}
-        >
-          {data.summary}
-        </p>
-      </section>
-    ) : null;
-
-  const ExperienceList = ({
-    color = accent,
-    timeline = false,
-    light = false,
-  }: {
-    color?: string;
-    timeline?: boolean;
-    light?: boolean;
-  }) =>
-    experiences.length > 0 ? (
-      <section className="mt-5">
-        <SectionTitle
-          color={color}
-          light={light}
-        >
-          Experiência
-        </SectionTitle>
-
-        <Line color={color} />
-
-        <div
-          className={`mt-3 ${
-            timeline
-              ? "border-l pl-4"
-              : "space-y-4"
-          }`}
-          style={
-            timeline
-              ? {
-                  borderColor: `${color}45`,
-                }
-              : undefined
-          }
-        >
-          {experiences.map((e, i) => (
-            <div
-              key={i}
-              className={`relative ${
-                timeline ? "mb-4" : ""
-              }`}
-            >
-              {timeline && (
-                <span
-                  className="absolute -left-[20px] top-1 h-[8px] w-[8px] rounded-full"
-                  style={{
-                    backgroundColor: color,
-                  }}
-                />
-              )}
-
-              <div className="flex items-start justify-between gap-3">
-                <p
-                  className="text-[11.5px] font-bold"
-                  style={{
-                    color: light
-                      ? "#ffffff"
-                      : "#171717",
-                  }}
-                >
-                  {e.role || "Função"}
-                </p>
-
-                {e.period && (
-                  <span
-                    className="whitespace-nowrap text-[8.5px]"
-                    style={{
-                      color: light
-                        ? "rgba(255,255,255,.55)"
-                        : "#737373",
-                    }}
-                  >
-                    {e.period}
-                  </span>
-                )}
-              </div>
-
-              {e.company && (
-                <p
-                  className="mt-[2px] text-[9.5px] font-semibold"
-                  style={{
-                    color: light
-                      ? color
-                      : color,
-                  }}
-                >
-                  {e.company}
-                </p>
-              )}
-
-              {e.description && (
-                <p
-                  className="mt-1.5 text-[10px] leading-[1.5]"
-                  style={{
-                    color: light
-                      ? "rgba(255,255,255,.68)"
-                      : "#525252",
-                  }}
-                >
-                  {e.description}
-                </p>
-              )}
-            </div>
-          ))}
-        </div>
-      </section>
-    ) : null;
-
-  const EducationList = ({
-    color = accent,
-    light = false,
-  }: {
-    color?: string;
-    light?: boolean;
-  }) =>
-    education.length > 0 ? (
-      <section className="mt-5">
-        <SectionTitle
-          color={color}
-          light={light}
-        >
-          Formação
-        </SectionTitle>
-
-        <Line color={color} />
-
-        <div className="mt-3 space-y-3">
-          {education.map((e, i) => (
-            <div key={i}>
-              <p
-                className="text-[11px] font-bold"
-                style={{
-                  color: light
-                    ? "#ffffff"
-                    : "#171717",
-                }}
-              >
-                {e.course || "Formação"}
-              </p>
-
-              <p
-                className="mt-[2px] text-[9.5px]"
-                style={{
-                  color: light
-                    ? "rgba(255,255,255,.62)"
-                    : "#737373",
-                }}
-              >
-                {[e.school, e.period]
-                  .filter(Boolean)
-                  .join(" · ")}
-              </p>
-            </div>
-          ))}
-        </div>
-      </section>
-    ) : null;
-
-  const Skills = ({
-    color = accent,
-    bars = false,
-    light = false,
-  }: {
-    color?: string;
-    bars?: boolean;
-    light?: boolean;
-  }) =>
-    skills.length > 0 ? (
-      <section className="mt-5">
-        <SectionTitle
-          color={color}
-          light={light}
-        >
-          Competências
-        </SectionTitle>
-
-        <Line color={color} />
-
-        {bars ? (
-          <div className="mt-3 space-y-2.5">
-            {skills.map((skill, i) => (
-              <div key={skill}>
-                <div className="flex justify-between">
-                  <span
-                    className="text-[9px]"
-                    style={{
-                      color: light
-                        ? "rgba(255,255,255,.8)"
-                        : "#404040",
-                    }}
-                  >
-                    {skill}
-                  </span>
-                </div>
-
-                <div
-                  className="mt-1 h-[3px] rounded-full"
-                  style={{
-                    backgroundColor: light
-                      ? "rgba(255,255,255,.12)"
-                      : `${color}18`,
-                  }}
-                >
-                  <div
-                    className="h-full rounded-full"
-                    style={{
-                      width: `${Math.max(
-                        45,
-                        94 - i * 8,
-                      )}%`,
-                      backgroundColor: color,
-                    }}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="mt-3 flex flex-wrap gap-1.5">
-            {skills.map((skill) => (
-              <span
-                key={skill}
-                className="rounded-full px-2 py-1 text-[8.5px] font-medium"
-                style={{
-                  backgroundColor: light
-                    ? "rgba(255,255,255,.1)"
-                    : `${color}12`,
-                  color: light
-                    ? "rgba(255,255,255,.85)"
-                    : color,
-                }}
-              >
-                {skill}
-              </span>
-            ))}
-          </div>
-        )}
-      </section>
-    ) : null;
-
-  const Languages = ({
-    color = accent,
-    light = false,
-  }: {
-    color?: string;
-    light?: boolean;
-  }) =>
-    languages.length > 0 ? (
-      <section className="mt-5">
-        <SectionTitle
-          color={color}
-          light={light}
-        >
-          Idiomas
-        </SectionTitle>
-
-        <Line color={color} />
-
-        <div className="mt-3 space-y-1.5">
-          {languages.map((language) => (
-            <p
-              key={language}
-              className="text-[9.5px]"
-              style={{
-                color: light
-                  ? "rgba(255,255,255,.75)"
-                  : "#525252",
-              }}
-            >
-              {language}
-            </p>
-          ))}
-        </div>
-      </section>
-    ) : null;
-
-  const ContactLine = ({
-    light = false,
-  }: {
-    light?: boolean;
-  }) =>
-    contacts.length > 0 ? (
-      <p
-        className="text-[9px]"
-        style={{
-          color: light
-            ? "rgba(255,255,255,.62)"
-            : "#737373",
-        }}
-      >
-        {contacts.join("   ·   ")}
-      </p>
-    ) : null;
-
-  const Page = ({
-    children,
-    background = "#FFFFFF",
-  }: {
-    children: React.ReactNode;
-    background?: string;
-  }) => (
-    <div
-      id={id}
-      className="mx-auto w-full max-w-[794px] overflow-hidden text-neutral-800 shadow-sm"
-      style={{
-        aspectRatio: "1 / 1.414",
-        background,
-        fontFamily: bodyFont,
-      }}
-    >
-      {children}
-    </div>
-  );
+  const title =
+    data.title || "Profissional";
 
   /*
-  |--------------------------------------------------------------------------
-  | 01 — EDITORIAL
-  |--------------------------------------------------------------------------
-  */
+   * ============================================================
+   * MODELO 01
+   * ELEGANTE GOLD
+   *
+   * Este é o modelo baseado diretamente no PDF enviado.
+   * ============================================================
+   */
 
   if (template.layout === "editorial") {
-    return Page({
-      background: "#F7F5F0",
-      children: (
-        <div className="h-full px-10 py-9">
-          <header className="grid grid-cols-[1fr_150px] gap-8">
-            <div>
-              <p
-                className="text-[8px] font-bold uppercase tracking-[0.35em]"
-                style={{ color: accent }}
-              >
-                CURRICULUM VITAE
-              </p>
-
-              <h1
-                className="mt-4 text-[38px] font-normal leading-[0.95] tracking-[-0.04em]"
-                style={{
-                  fontFamily: "Georgia, serif",
-                }}
-              >
-                {name}
-              </h1>
-
-              <p
-                className="mt-3 text-[11px] font-bold uppercase tracking-[0.22em]"
-                style={{ color: accent }}
-              >
-                {title}
-              </p>
-
-              <div className="mt-4">
-                <ContactLine />
-              </div>
-            </div>
-
-            <div className="flex justify-end">
-              <Photo
-                size={132}
-                shape="square"
-              />
-            </div>
-          </header>
-
-          <div
-            className="mt-7 h-[2px] w-full"
-            style={{ backgroundColor: accent }}
-          />
-
-          <div className="grid grid-cols-[1fr_220px] gap-10">
-            <main>
-              <Summary number="01" />
-              <ExperienceList
-                timeline
-              />
-              <EducationList />
-            </main>
-
-            <aside>
-              <Skills
-                bars
-              />
-              <Languages />
-            </aside>
-          </div>
-        </div>
-      ),
-    });
-  }
-
-  /*
-  |--------------------------------------------------------------------------
-  | 02 — EXECUTIVE
-  |--------------------------------------------------------------------------
-  */
-
-  if (template.layout === "executive") {
-    return Page({
-      children: (
-        <div className="h-full">
-          <header
-            className="px-10 py-8 text-white"
-            style={{
-              backgroundColor: surface,
-            }}
-          >
-            <div className="flex items-center justify-between gap-6">
-              <div>
-                <p className="text-[8px] uppercase tracking-[0.4em] text-white/45">
-                  EXECUTIVE PROFILE
-                </p>
-
-                <h1 className="mt-3 text-[31px] font-semibold tracking-[-0.03em]">
-                  {name}
-                </h1>
-
-                <p
-                  className="mt-1 text-[12px] font-medium"
-                  style={{ color: accent }}
-                >
-                  {title}
-                </p>
-              </div>
-
-              <Photo
-                size={102}
-                shape="circle"
-                ring="rgba(255,255,255,.3)"
-              />
-            </div>
-
-            <div className="mt-5 border-t border-white/10 pt-3">
-              <ContactLine light />
-            </div>
-          </header>
-
-          <div className="grid grid-cols-[1fr_205px] gap-8 px-9 py-5">
-            <main>
-              <Summary />
-              <ExperienceList />
-              <EducationList />
-            </main>
-
-            <aside
-              className="rounded-xl p-4"
-              style={{
-                backgroundColor: `${accent}0D`,
-              }}
-            >
-              <Skills bars />
-              <Languages />
-            </aside>
-          </div>
-        </div>
-      ),
-    });
-  }
-
-  /*
-  |--------------------------------------------------------------------------
-  | 03 — CORPORATE
-  |--------------------------------------------------------------------------
-  */
-
-  if (template.layout === "corporate") {
-    return Page({
-      children: (
-        <div className="h-full px-9 py-8">
-          <header className="border-b-2 pb-5">
-            <div className="flex items-center gap-5">
-              <Photo
-                size={82}
-                shape="circle"
-              />
-
-              <div className="flex-1">
-                <h1 className="text-[28px] font-bold tracking-tight">
-                  {name}
-                </h1>
-
-                <p
-                  className="mt-1 text-[11px] font-semibold uppercase tracking-[0.2em]"
-                  style={{ color: accent }}
-                >
-                  {title}
-                </p>
-
-                <div className="mt-3">
-                  <ContactLine />
-                </div>
-              </div>
-            </div>
-          </header>
-
-          <div className="grid grid-cols-[1fr_190px] gap-8">
-            <main>
-              <Summary />
-              <ExperienceList />
-              <EducationList />
-            </main>
-
-            <aside>
-              <Skills />
-              <Languages />
-            </aside>
-          </div>
-        </div>
-      ),
-    });
-  }
-
-  /*
-  |--------------------------------------------------------------------------
-  | 04 — SWISS
-  |--------------------------------------------------------------------------
-  */
-
-  if (template.layout === "swiss") {
-    return Page({
-      children: (
-        <div className="h-full px-10 py-9">
-          <header className="grid grid-cols-[90px_1fr] gap-6">
-            <div
-              className="flex h-[80px] w-[80px] items-center justify-center text-[24px] font-bold text-white"
-              style={{ backgroundColor: accent }}
-            >
-              {initials(name)}
-            </div>
-
-            <div>
-              <h1 className="text-[35px] font-black leading-[0.9] tracking-[-0.06em]">
-                {name}
-              </h1>
-
-              <p className="mt-3 text-[11px] font-bold uppercase tracking-[0.25em]">
-                {title}
-              </p>
-
-              <div className="mt-3">
-                <ContactLine />
-              </div>
-            </div>
-          </header>
-
-          <div
-            className="mt-7 h-[5px]"
-            style={{ backgroundColor: accent }}
-          />
-
-          <div className="grid grid-cols-[165px_1fr] gap-8">
-            <aside>
-              <Skills bars />
-              <Languages />
-            </aside>
-
-            <main>
-              <Summary number="01" />
-              <ExperienceList />
-              <EducationList />
-            </main>
-          </div>
-        </div>
-      ),
-    });
-  }
-
-  /*
-  |--------------------------------------------------------------------------
-  | 05 — MINIMAL
-  |--------------------------------------------------------------------------
-  */
-
-  if (template.layout === "minimal") {
-    return Page({
-      children: (
-        <div className="h-full px-12 py-11">
-          <header>
-            <h1 className="text-[34px] font-light tracking-[-0.05em]">
-              {name}
-            </h1>
-
-            <p
-              className="mt-2 text-[10px] font-bold uppercase tracking-[0.35em]"
-              style={{ color: accent }}
-            >
-              {title}
-            </p>
-
-            <div className="mt-3">
-              <ContactLine />
-            </div>
-          </header>
-
-          <div
-            className="mt-7 h-px"
-            style={{ backgroundColor: "#171717" }}
-          />
-
-          <main className="max-w-[650px]">
-            <Summary />
-            <ExperienceList />
-            <EducationList />
-
-            <div className="grid grid-cols-2 gap-8">
-              <Skills />
-              <Languages />
-            </div>
-          </main>
-        </div>
-      ),
-    });
-  }
-
-  /*
-  |--------------------------------------------------------------------------
-  | 06 — TIMELINE
-  |--------------------------------------------------------------------------
-  */
-
-  if (template.layout === "timeline") {
-    return Page({
-      children: (
-        <div className="h-full px-9 py-8">
-          <header className="flex items-center gap-5">
-            <Photo
-              size={88}
-              shape="circle"
-              ring={accent}
-            />
-
-            <div>
-              <h1 className="text-[28px] font-extrabold">
-                {name}
-              </h1>
-
-              <p
-                className="mt-1 text-[11px] font-semibold"
-                style={{ color: accent }}
-              >
-                {title}
-              </p>
-
-              <div className="mt-2">
-                <ContactLine />
-              </div>
-            </div>
-          </header>
-
-          <Summary />
-
-          <section className="mt-6">
-            <SectionTitle number="01">
-              Percurso profissional
-            </SectionTitle>
-
-            <Line />
-
-            <div
-              className="mt-4 border-l-2 pl-5"
-              style={{
-                borderColor: `${accent}35`,
-              }}
-            >
-              {experiences.map((e, i) => (
-                <div
-                  key={i}
-                  className="relative mb-5"
-                >
-                  <span
-                    className="absolute -left-[26px] top-1 h-[10px] w-[10px] rounded-full border-2 border-white"
-                    style={{
-                      backgroundColor: accent,
-                    }}
-                  />
-
-                  <p className="text-[12px] font-bold">
-                    {e.role}
-                  </p>
-
-                  <p
-                    className="mt-[2px] text-[9.5px] font-semibold"
-                    style={{ color: accent }}
-                  >
-                    {[e.company, e.period]
-                      .filter(Boolean)
-                      .join(" · ")}
-                  </p>
-
-                  {e.description && (
-                    <p className="mt-1 text-[10px] leading-[1.5] text-neutral-600">
-                      {e.description}
-                    </p>
-                  )}
-                </div>
-              ))}
-            </div>
-          </section>
-
-          <div className="grid grid-cols-2 gap-8">
-            <EducationList />
-            <Skills />
-          </div>
-        </div>
-      ),
-    });
-  }
-
-  /*
-  |--------------------------------------------------------------------------
-  | 07 — CREATIVE
-  |--------------------------------------------------------------------------
-  */
-
-  if (template.layout === "creative") {
-    return Page({
-      background: "#FAF7FF",
-      children: (
-        <div className="relative h-full px-8 py-8">
-          <div
-            className="absolute right-0 top-0 h-[220px] w-[220px] rounded-bl-[100px]"
-            style={{
-              backgroundColor: `${accent}12`,
-            }}
-          />
-
-          <header className="relative flex items-center gap-6">
-            <Photo
-              size={116}
-              shape="square"
-            />
-
-            <div>
-              <p
-                className="text-[8px] font-bold uppercase tracking-[0.4em]"
-                style={{ color: accent }}
-              >
-                CREATIVE PROFILE
-              </p>
-
-              <h1
-                className="mt-2 text-[32px] font-black leading-[0.9]"
-                style={{
-                  fontFamily: headingFont,
-                }}
-              >
-                {name}
-              </h1>
-
-              <p className="mt-3 text-[11px] font-semibold">
-                {title}
-              </p>
-
-              <div className="mt-2">
-                <ContactLine />
-              </div>
-            </div>
-          </header>
-
-          <div className="relative mt-7 grid grid-cols-[1fr_215px] gap-6">
-            <main>
-              <Summary number="01" />
-              <ExperienceList />
-              <EducationList />
-            </main>
-
-            <aside>
-              <div
-                className="rounded-2xl p-5"
-                style={{
-                  backgroundColor: "#FFFFFF",
-                }}
-              >
-                <Skills />
-                <Languages />
-              </div>
-            </aside>
-          </div>
-        </div>
-      ),
-    });
-  }
-
-  /*
-  |--------------------------------------------------------------------------
-  | 08 — ACADEMIC
-  |--------------------------------------------------------------------------
-  */
-
-  if (template.layout === "academic") {
-    return Page({
-      children: (
-        <div className="h-full px-10 py-9">
-          <header className="border-b pb-5">
-            <h1
-              className="text-[30px] font-normal"
-              style={{
-                fontFamily: "Georgia, serif",
-              }}
-            >
-              {name}
-            </h1>
-
-            <p className="mt-1 text-[12px]">
-              {title}
-            </p>
-
-            <div className="mt-3">
-              <ContactLine />
-            </div>
-          </header>
-
-          <main>
-            <Summary />
-            <ExperienceList />
-            <EducationList />
-
-            <div className="grid grid-cols-2 gap-8">
-              <Skills />
-              <Languages />
-            </div>
-          </main>
-        </div>
-      ),
-    });
-  }
-
-  /*
-  |--------------------------------------------------------------------------
-  | 09 — TECHNOLOGY
-  |--------------------------------------------------------------------------
-  */
-
-  if (template.layout === "tech") {
-    return Page({
-      background: "#F1F5F9",
-      children: (
-        <div className="h-full">
-          <header
-            className="px-8 py-7 text-white"
-            style={{
-              backgroundColor: "#0B1120",
-            }}
-          >
-            <div className="flex items-center gap-5">
-              <Photo
-                size={92}
-                shape="square"
-                ring={accent}
-              />
-
-              <div>
-                <p
-                  className="text-[8px] font-bold tracking-[0.35em]"
-                  style={{ color: accent }}
-                >
-                  /PROFILE
-                </p>
-
-                <h1 className="mt-2 text-[28px] font-bold">
-                  {name}
-                </h1>
-
-                <p className="mt-1 text-[11px] text-white/60">
-                  {title}
-                </p>
-              </div>
-            </div>
-
-            <div className="mt-5 border-t border-white/10 pt-3">
-              <ContactLine light />
-            </div>
-          </header>
-
-          <div className="grid grid-cols-[1fr_205px] gap-6 px-8 py-5">
-            <main>
-              <Summary />
-
-              <ExperienceList />
-
-              <EducationList />
-            </main>
-
-            <aside
-              className="rounded-xl p-4 text-white"
-              style={{
-                backgroundColor: "#0B1120",
-              }}
-            >
-              <Skills
-                bars
-                light
-                color={accent}
-              />
-
-              <Languages
-                light
-                color={accent}
-              />
-            </aside>
-          </div>
-        </div>
-      ),
-    });
-  }
-
-  /*
-  |--------------------------------------------------------------------------
-  | 10 — PORTFOLIO
-  |--------------------------------------------------------------------------
-  */
-
-  if (template.layout === "portfolio") {
-    return Page({
-      background: "#F5F3FF",
-      children: (
-        <div className="h-full px-7 py-7">
-          <header className="rounded-[20px] bg-white p-6">
-            <div className="flex items-center gap-5">
-              <Photo
-                size={104}
-                shape="square"
-              />
-
-              <div>
-                <p
-                  className="text-[8px] font-bold uppercase tracking-[0.3em]"
-                  style={{ color: accent }}
-                >
-                  PORTFOLIO / CV
-                </p>
-
-                <h1 className="mt-2 text-[29px] font-black tracking-tight">
-                  {name}
-                </h1>
-
-                <p className="mt-1 text-[11px] font-semibold">
-                  {title}
-                </p>
-
-                <div className="mt-2">
-                  <ContactLine />
-                </div>
-              </div>
-            </div>
-          </header>
-
-          <div className="mt-4 grid grid-cols-[1fr_205px] gap-4">
-            <main className="space-y-4">
-              {data.summary && (
-                <div className="rounded-[18px] bg-white p-5">
-                  <SectionTitle>
-                    Sobre mim
-                  </SectionTitle>
-
-                  <p className="mt-3 text-[10px] leading-[1.6] text-neutral-600">
-                    {data.summary}
-                  </p>
-                </div>
-              )}
-
-              <div className="rounded-[18px] bg-white p-5">
-                <SectionTitle>
-                  Experiência
-                </SectionTitle>
-
-                <div className="mt-4 space-y-4">
-                  {experiences.map((e, i) => (
-                    <div key={i}>
-                      <div className="flex justify-between gap-3">
-                        <p className="text-[11.5px] font-bold">
-                          {e.role}
-                        </p>
-
-                        {e.period && (
-                          <span
-                            className="rounded-full px-2 py-1 text-[7.5px] font-semibold"
-                            style={{
-                              backgroundColor: `${accent}12`,
-                              color: accent,
-                            }}
-                          >
-                            {e.period}
-                          </span>
-                        )}
-                      </div>
-
-                      <p
-                        className="mt-1 text-[9px] font-semibold"
-                        style={{ color: accent }}
-                      >
-                        {e.company}
-                      </p>
-
-                      {e.description && (
-                        <p className="mt-1.5 text-[9.5px] leading-[1.5] text-neutral-600">
-                          {e.description}
-                        </p>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="rounded-[18px] bg-white p-5">
-                <EducationList />
-              </div>
-            </main>
-
-            <aside className="space-y-4">
-              <div className="rounded-[18px] bg-white p-5">
-                <Skills />
-              </div>
-
-              <div className="rounded-[18px] bg-white p-5">
-                <Languages />
-              </div>
-            </aside>
-          </div>
-        </div>
-      ),
-    });
-  }
-
-  /*
-  |--------------------------------------------------------------------------
-  | 11 — PRIMEIRO EMPREGO
-  |--------------------------------------------------------------------------
-  */
-
-  if (template.layout === "first-job") {
-    return Page({
-      background: "#F8FAFC",
-      children: (
-        <div className="h-full">
-          <header
-            className="px-9 py-7"
-            style={{
-              backgroundColor: surface,
-              borderBottom: `4px solid ${accent}`,
-            }}
-          >
-            <div className="flex items-center gap-5">
-              <Photo
-                size={96}
-                shape="circle"
-              />
-
-              <div>
-                <p
-                  className="text-[8px] font-bold uppercase tracking-[0.3em]"
-                  style={{ color: accent }}
-                >
-                  PRIMEIRO PASSO
-                </p>
-
-                <h1 className="mt-2 text-[27px] font-extrabold">
-                  {name}
-                </h1>
-
-                <p className="mt-1 text-[11px] font-semibold">
-                  {title}
-                </p>
-
-                <div className="mt-2">
-                  <ContactLine />
-                </div>
-              </div>
-            </div>
-          </header>
-
-          <div className="grid grid-cols-2 gap-6 px-9 py-4">
-            <main>
-              <Summary />
-              <EducationList />
-
-              <Skills />
-            </main>
-
-            <aside>
-              <ExperienceList />
-              <Languages />
-            </aside>
-          </div>
-        </div>
-      ),
-    });
-  }
-
-  /*
-  |--------------------------------------------------------------------------
-  | 12 — FINANCE
-  |--------------------------------------------------------------------------
-  */
-
-  if (template.layout === "finance") {
-    return Page({
-      background: "#F8FAFA",
-      children: (
-        <div className="h-full px-10 py-9">
-          <header className="grid grid-cols-[1fr_80px] gap-5 border-b-2 pb-5">
-            <div>
-              <p
-                className="text-[8px] font-bold uppercase tracking-[0.35em]"
-                style={{ color: accent }}
-              >
-                PROFESSIONAL PROFILE
-              </p>
-
-              <h1
-                className="mt-3 text-[31px] font-normal"
-                style={{
-                  fontFamily: "Georgia, serif",
-                }}
-              >
-                {name}
-              </h1>
-
-              <p className="mt-1 text-[11px] font-semibold">
-                {title}
-              </p>
-
-              <div className="mt-3">
-                <ContactLine />
-              </div>
-            </div>
-
-            <div
-              className="flex h-[76px] w-[76px] items-center justify-center rounded-full text-[18px] font-bold text-white"
-              style={{
-                backgroundColor: accent,
-              }}
-            >
-              {initials(name)}
-            </div>
-          </header>
-
-          <div className="grid grid-cols-[1fr_190px] gap-8">
-            <main>
-              <Summary />
-              <ExperienceList />
-              <EducationList />
-            </main>
-
-            <aside>
-              <Skills bars color={accent} />
-              <Languages color={accent} />
-            </aside>
-          </div>
-        </div>
-      ),
-    });
-  }
-
-  /*
-  |--------------------------------------------------------------------------
-  | 13 — DEVELOPMENT / ONG
-  |--------------------------------------------------------------------------
-  */
-
-  if (template.layout === "development") {
-    return Page({
-      background: "#F6FAF7",
-      children: (
-        <div className="h-full">
-          <header
-            className="px-9 py-7 text-white"
-            style={{
-              backgroundColor: "#14532D",
-            }}
-          >
-            <div className="flex items-center gap-5">
-              <Photo
-                size={94}
-                shape="circle"
-                ring="rgba(255,255,255,.35)"
-              />
-
-              <div>
-                <p className="text-[8px] font-bold uppercase tracking-[0.35em] text-white/50">
-                  DEVELOPMENT · IMPACT
-                </p>
-
-                <h1 className="mt-2 text-[27px] font-bold">
-                  {name}
-                </h1>
-
-                <p
-                  className="mt-1 text-[11px]"
-                  style={{ color: "#86EFAC" }}
-                >
-                  {title}
-                </p>
-
-                <div className="mt-2">
-                  <ContactLine light />
-                </div>
-              </div>
-            </div>
-          </header>
-
-          <div className="grid grid-cols-[1fr_205px] gap-7 px-9 py-4">
-            <main>
-              <Summary />
-
-              <ExperienceList
-                timeline
-                color={accent}
-              />
-
-              <EducationList />
-            </main>
-
-            <aside>
-              <Skills />
-              <Languages />
-
-              <section className="mt-6">
-                <SectionTitle>
-                  Áreas de interesse
-                </SectionTitle>
-
-                <Line />
-
-                <p className="mt-3 text-[9.5px] leading-[1.6] text-neutral-600">
-                  Desenvolvimento sustentável · Gestão de projectos ·
-                  Impacto social · Comunidades · Parcerias
-                </p>
-              </section>
-            </aside>
-          </div>
-        </div>
-      ),
-    });
-  }
-
-  /*
-  |--------------------------------------------------------------------------
-  | 14 — ATS PRO
-  |--------------------------------------------------------------------------
-  */
-
-  if (template.layout === "ats") {
-    return Page({
-      children: (
-        <div className="h-full px-10 py-9">
-          <header
-            className="border-b-2 pb-5"
-            style={{ borderColor: "#111827" }}
-          >
-            <h1 className="text-[28px] font-bold uppercase tracking-tight">
-              {name}
-            </h1>
-
-            <p className="mt-1 text-[12px] font-semibold">
-              {title}
-            </p>
-
-            <div className="mt-2">
-              <ContactLine />
-            </div>
-          </header>
-
-          <main>
-            <Summary />
-
-            <ExperienceList />
-
-            <EducationList />
-
-            {skills.length > 0 && (
-              <section className="mt-5">
-                <SectionTitle color="#111827">
-                  Competências
-                </SectionTitle>
-
-                <Line color="#111827" />
-
-                <p className="mt-2 text-[10px] leading-[1.6] text-neutral-700">
-                  {skills.join(" • ")}
-                </p>
-              </section>
-            )}
-
-            {languages.length > 0 && (
-              <section className="mt-5">
-                <SectionTitle color="#111827">
-                  Idiomas
-                </SectionTitle>
-
-                <Line color="#111827" />
-
-                <p className="mt-2 text-[10px] leading-[1.6] text-neutral-700">
-                  {languages.join(" • ")}
-                </p>
-              </section>
-            )}
-          </main>
-        </div>
-      ),
-    });
-  }
-
-  /*
-  |--------------------------------------------------------------------------
-  | 15 — MOÇAMBIQUE
-  |--------------------------------------------------------------------------
-  */
-
-  if (template.layout === "mozambique") {
-    return Page({
-      background: "#FAFAF8",
-      children: (
-        <div className="h-full">
-          <div className="flex h-[5px] w-full">
-            <div
-              className="w-1/3"
-              style={{
-                backgroundColor: "#F2C94C",
-              }}
-            />
-
-            <div
-              className="w-1/3"
-              style={{
-                backgroundColor: "#007A3D",
-              }}
-            />
-
-            <div
-              className="w-1/3"
-              style={{
-                backgroundColor: "#CE1126",
-              }}
-            />
-          </div>
-
-          <header className="px-9 py-7">
-            <div className="flex items-center gap-5">
-              <Photo
-                size={98}
-                shape="circle"
-                ring={accent}
-              />
-
-              <div>
-                <p
-                  className="text-[8px] font-bold uppercase tracking-[0.4em]"
-                  style={{ color: accent }}
-                >
-                  MOÇAMBIQUE · PROFISSIONAL
-                </p>
-
-                <h1 className="mt-2 text-[29px] font-extrabold">
-                  {name}
-                </h1>
-
-                <p className="mt-1 text-[11px] font-semibold text-neutral-600">
-                  {title}
-                </p>
-
-                <div className="mt-2">
-                  <ContactLine />
-                </div>
-              </div>
-            </div>
-          </header>
-
-          <div className="grid grid-cols-[1fr_205px] gap-7 px-9 py-3">
-            <main>
-              <Summary />
-              <ExperienceList />
-              <EducationList />
-            </main>
-
-            <aside>
-              <Skills />
-              <Languages />
-
-              <section className="mt-6">
-                <SectionTitle>
-                  Localização
-                </SectionTitle>
-
-                <Line />
-
-                <p className="mt-3 text-[9.5px] text-neutral-600">
-                  {data.location || "Moçambique"}
-                </p>
-              </section>
-            </aside>
-          </div>
-        </div>
-      ),
-    });
-  }
-
-  /*
-  |--------------------------------------------------------------------------
-  | FALLBACK
-  |--------------------------------------------------------------------------
-  */
-
-  return Page({
-    children: (
-      <div className="h-full px-10 py-9">
-        <header className="border-b pb-5">
-          <h1 className="text-[30px] font-bold">
-            {name}
-          </h1>
-
-          <p
-            className="mt-1 text-[11px] font-semibold"
-            style={{ color: accent }}
-          >
-            {title}
-          </p>
-
-          <div className="mt-2">
-            <ContactLine />
-          </div>
-        </header>
-
-        <Summary />
-        <ExperienceList />
-        <EducationList />
-        <Skills />
-        <Languages />
-      </div>
-    ),
-  });
-}
-
-/**
- * Miniatura A4 usada na galeria de modelos.
- */
-export function CvThumb({
-  data,
-  template,
-  width = 180,
-}: {
-  data: CvData;
-  template: CvTemplate;
-  width?: number;
-}) {
-  const scale = width / 794;
-
-  return (
-    <div
-      className="overflow-hidden rounded-lg border border-border bg-white"
-      style={{
-        width,
-        height: width * 1.414,
-      }}
-    >
-      <div
-        style={{
-          width: 794,
-          transform: `scale(${scale})`,
-          transformOrigin: "top left",
-        }}
+    return (
+      <BasePage
+        id={id}
+        background="#FFFFFF"
       >
-        <CvPreview
-          data={data}
-          template={template}
-        />
-      </div>
-    </div>
-  );
-                 }
+        <WaveDecoration position="top" />
+        <WaveDecoration position="bottom" />
+
+        <div
+          style={{
+            position: "relative",
+            zIndex: 2,
+            padding:
+              "76px 48px 48px",
+          }}
+        >
+          <header
+            style={{
+              marginBottom: 48,
+            }}
+          >
+            <h1
+              style={{
+                margin: "0 0 27px 55px",
+                color: gold,
+                fontSize: 19,
+                fontWeight: 800,
+                letterSpacing: ".02em",
+              }}
+            >
+              {name}
+            </h1>
+
+            <div
+              style={{
+                width: "48%",
+              }}
+            >
+              <h2
+                style={{
+                  margin: "0 0 20px",
+                  color: gold,
+                 
