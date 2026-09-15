@@ -6,21 +6,22 @@ const NETSHOP_API = "https://www.netshop.co.mz/api/v1";
 type PaymentMethod = "mpesa" | "mkesh" | "card";
 
 /**
- * Seleciona o Wallet ID correto.
+ * Seleciona o Wallet ID da NetShop.
  *
- * M-Pesa → NETSHOP_WALLET_ID_1
- * mKesh  → NETSHOP_WALLET_ID_2
- * Card   → primeiro Wallet disponível
+ * M-Pesa -> NETSHOP_WALLET_ID_1
+ * mKesh  -> NETSHOP_WALLET_ID_2
+ * Card   -> primeiro Wallet disponível
  */
 function getWalletId(
   method: PaymentMethod,
   walletId?: string,
 ): string {
-  const wallet1 = process.env["NETSHOP_WALLET_ID_1"]?.trim();
-  const wallet2 = process.env["NETSHOP_WALLET_ID_2"]?.trim();
+  const wallet1 =
+    process.env["NETSHOP_WALLET_ID_1"]?.trim();
 
-  // Permite Wallet ID explicitamente enviado,
-  // mas somente se estiver configurado no servidor.
+  const wallet2 =
+    process.env["NETSHOP_WALLET_ID_2"]?.trim();
+
   if (
     walletId &&
     (walletId === wallet1 || walletId === wallet2)
@@ -28,26 +29,22 @@ function getWalletId(
     return walletId;
   }
 
-  // M-Pesa utiliza o Wallet 1.
   if (method === "mpesa") {
     return wallet1 || "";
   }
 
-  // mKesh utiliza o Wallet 2.
   if (method === "mkesh") {
     return wallet2 || "";
   }
 
-  // Cartão utiliza o primeiro Wallet disponível.
   return wallet1 || wallet2 || "";
 }
 
 /**
- * Normaliza número de telefone moçambicano.
+ * Normaliza número moçambicano.
  *
  * Aceita:
  * 841234567
- * 851234567
  * +258841234567
  * 258841234567
  * 00258841234567
@@ -80,9 +77,6 @@ function normalizeMsisdn(
 
 /**
  * Prefixos das carteiras móveis.
- *
- * M-Pesa → 84 / 85
- * mKesh  → 82 / 83
  */
 const METHOD_PREFIXES: Record<
   string,
@@ -93,12 +87,12 @@ const METHOD_PREFIXES: Record<
 };
 
 /**
- * Obtém o preço atual do download do CV.
+ * Obtém o preço do CV.
  *
- * O preço vem de:
- * app_settings → cv_price_mzn
+ * O preço vem da tabela app_settings,
+ * usando a chave cv_price_mzn.
  *
- * Caso não exista, utiliza 150 MZN.
+ * Se não existir, usa 150 MZN.
  */
 export const getCvPrice = createServerFn({
   method: "GET",
@@ -112,11 +106,15 @@ export const getCvPrice = createServerFn({
   const supabase =
     createPublicServerClient();
 
-  const { data } = await supabase
-    .from("app_settings")
-    .select("value")
-    .eq("key", "cv_price_mzn")
-    .maybeSingle();
+  const { data } =
+    await supabase
+      .from("app_settings")
+      .select("value")
+      .eq(
+        "key",
+        "cv_price_mzn",
+      )
+      .maybeSingle();
 
   const price = Number(
     data?.value ?? 150,
@@ -132,22 +130,17 @@ export const getCvPrice = createServerFn({
 });
 
 /**
- * Verifica se o utilizador atual possui
- * acesso ao download do CV.
+ * Verifica se o utilizador pode baixar o CV.
  *
- * REGRA NORMAL:
- * O utilizador precisa ter uma compra com:
+ * Existem duas formas de liberar:
  *
- * status = "paid"
+ * 1. Conta de teste:
+ *    O email da conta deve ser igual ao valor
+ *    de CV_TEST_ADMIN_EMAIL configurado no Render.
  *
- * REGRA DE TESTE:
- * Se o email da conta autenticada for igual
- * ao email definido no Render:
- *
- * CV_TEST_ADMIN_EMAIL
- *
- * então o utilizador recebe acesso de teste
- * sem precisar efetuar pagamento.
+ * 2. Utilizador normal:
+ *    Deve existir uma compra do próprio utilizador
+ *    com status "paid".
  */
 export const getCvAccess = createServerFn({
   method: "GET",
@@ -155,42 +148,62 @@ export const getCvAccess = createServerFn({
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     /*
-     * Email da conta autorizada para testes.
+     * =====================================================
+     * 1. CONTA DE TESTE
+     * =====================================================
      */
+
     const testAdminEmail =
-      process.env[
-        "CV_TEST_ADMIN_EMAIL"
-      ]
+      process.env["CV_TEST_ADMIN_EMAIL"]
         ?.trim()
         .toLowerCase();
 
-    /*
-     * Verifica primeiro se a conta atual
-     * corresponde ao email de teste.
-     */
     if (testAdminEmail) {
       try {
+        /*
+         * IMPORTANTE:
+         * usamos supabaseAdmin porque auth.admin
+         * precisa de privilégios administrativos.
+         */
+        const {
+          supabaseAdmin,
+        } = await import(
+          "@/integrations/supabase/client.server"
+        );
+
         const {
           data: { user },
           error: userError,
         } =
-          await context.supabase.auth.admin.getUserById(
+          await supabaseAdmin.auth.admin.getUserById(
             context.userId,
           );
 
-        if (
-          !userError &&
-          user?.email
-        ) {
+        if (userError) {
+          console.error(
+            "Erro ao obter utilizador para teste:",
+            userError,
+          );
+        } else if (user?.email) {
           const loggedUserEmail =
             user.email
               .trim()
               .toLowerCase();
 
+          /*
+           * Se o email da conta for exatamente
+           * o email definido no Render,
+           * libera o download sem pagamento.
+           */
           if (
             loggedUserEmail ===
             testAdminEmail
           ) {
+            console.log(
+              "CV TEST ADMIN autorizado:",
+              loggedUserEmail,
+            );
+
             return {
               paid: true,
             };
@@ -198,30 +211,36 @@ export const getCvAccess = createServerFn({
         }
       } catch (error) {
         console.error(
-          "Erro ao verificar email da conta de teste:",
+          "Erro ao verificar CV_TEST_ADMIN_EMAIL:",
           error,
         );
       }
     }
 
     /*
-     * Utilizador normal:
-     * verifica se existe uma compra paga
-     * pertencente EXATAMENTE ao utilizador atual.
+     * =====================================================
+     * 2. UTILIZADOR NORMAL
+     * =====================================================
+     *
+     * Procura uma compra paga pertencente
+     * ao utilizador autenticado.
      */
-    const { data, error } =
-      await context.supabase
-        .from("cv_purchases")
-        .select("id")
-        .eq(
-          "user_id",
-          context.userId,
-        )
-        .eq(
-          "status",
-          "paid",
-        )
-        .limit(1);
+
+    const {
+      data,
+      error,
+    } = await context.supabase
+      .from("cv_purchases")
+      .select("id")
+      .eq(
+        "user_id",
+        context.userId,
+      )
+      .eq(
+        "status",
+        "paid",
+      )
+      .limit(1);
 
     if (error) {
       console.error(
@@ -241,12 +260,7 @@ export const getCvAccess = createServerFn({
   });
 
 /**
- * Cria uma cobrança através da NetShop.
- *
- * Métodos suportados:
- * - mpesa
- * - mkesh
- * - card
+ * Cria um pagamento na NetShop.
  */
 export const createCvPayment =
   createServerFn({
@@ -264,10 +278,16 @@ export const createCvPayment =
       }) => data,
     )
     .handler(
-      async ({ data, context }) => {
+      async ({
+        data,
+        context,
+      }) => {
         /*
-         * API Key da NetShop.
+         * =====================================================
+         * API KEY
+         * =====================================================
          */
+
         const apiKey =
           process.env[
             "NETSHOP_API_KEY"
@@ -282,8 +302,11 @@ export const createCvPayment =
         }
 
         /*
-         * Seleciona o Wallet ID.
+         * =====================================================
+         * WALLET ID
+         * =====================================================
          */
+
         const walletId =
           getWalletId(
             data.method,
@@ -299,8 +322,11 @@ export const createCvPayment =
         }
 
         /*
-         * Verifica URL de retorno.
+         * =====================================================
+         * URL DE RETORNO
+         * =====================================================
          */
+
         if (!data.returnUrl) {
           return {
             ok: false as const,
@@ -310,15 +336,15 @@ export const createCvPayment =
         }
 
         /*
-         * Validação do método.
+         * =====================================================
+         * MÉTODO DE PAGAMENTO
+         * =====================================================
          */
+
         if (
-          data.method !==
-            "mpesa" &&
-          data.method !==
-            "mkesh" &&
-          data.method !==
-            "card"
+          data.method !== "mpesa" &&
+          data.method !== "mkesh" &&
+          data.method !== "card"
         ) {
           return {
             ok: false as const,
@@ -327,17 +353,18 @@ export const createCvPayment =
           };
         }
 
+        /*
+         * =====================================================
+         * NÚMERO DE TELEFONE
+         * =====================================================
+         */
+
         let msisdn:
           | string
           | null = null;
 
-        /*
-         * Pagamentos móveis precisam
-         * de número de telefone.
-         */
         if (
-          data.method !==
-          "card"
+          data.method !== "card"
         ) {
           if (!data.msisdn) {
             return {
@@ -361,9 +388,10 @@ export const createCvPayment =
           }
 
           /*
-           * Confirma que o número
-           * corresponde à carteira escolhida.
+           * Confirma compatibilidade
+           * entre número e carteira.
            */
+
           const allowed =
             METHOD_PREFIXES[
               data.method
@@ -386,15 +414,18 @@ export const createCvPayment =
 
             return {
               ok: false as const,
-              error: `Número não compatível: ${errorMessage}`,
+              error:
+                `Número não compatível: ${errorMessage}`,
             };
           }
         }
 
         /*
-         * Obtém o preço configurado
-         * no banco de dados.
+         * =====================================================
+         * PREÇO DO CV
+         * =====================================================
          */
+
         const {
           data: setting,
         } =
@@ -425,8 +456,11 @@ export const createCvPayment =
         }
 
         /*
-         * Referência única.
+         * =====================================================
+         * REFERÊNCIA ÚNICA
+         * =====================================================
          */
+
         const reference =
           `CV-${Date.now()}-${Math.random()
             .toString(36)
@@ -434,9 +468,11 @@ export const createCvPayment =
             .toUpperCase();
 
         /*
-         * Regista a compra
-         * como pendente.
+         * =====================================================
+         * CRIA COMPRA PENDENTE
+         * =====================================================
          */
+
         const {
           error: purchaseError,
         } =
@@ -447,10 +483,14 @@ export const createCvPayment =
             .insert({
               user_id:
                 context.userId,
+
               reference,
+
               amount,
+
               status:
                 "pending",
+
               method:
                 data.method,
             });
@@ -471,35 +511,45 @@ export const createCvPayment =
         }
 
         /*
-         * Corpo enviado para a NetShop.
+         * =====================================================
+         * DADOS DA COBRANÇA NETSHOP
+         * =====================================================
          */
+
         const chargeBody: Record<
           string,
           unknown
         > = {
           amount,
-          currency: "MZN",
+
+          currency:
+            "MZN",
+
           method:
             data.method,
+
           reference,
+
           description:
             "Download de CV - Moza Empregos",
+
           return_url:
             data.returnUrl,
+
           metadata: {
             product:
               "cv_download",
+
             user_id:
               context.userId,
           },
         };
 
         /*
-         * Número enviado à NetShop.
-         *
-         * mKesh → +258XXXXXXXXX
-         * M-Pesa → 8XXXXXXXX
+         * Adiciona MSISDN para
+         * pagamentos móveis.
          */
+
         if (
           data.method !==
           "card"
@@ -513,10 +563,13 @@ export const createCvPayment =
               : msisdn;
         }
 
+        /*
+         * =====================================================
+         * ENVIA COBRANÇA PARA NETSHOP
+         * =====================================================
+         */
+
         try {
-          /*
-           * Timeout de 15 segundos.
-           */
           const controller =
             new AbortController();
 
@@ -555,9 +608,10 @@ export const createCvPayment =
                       "application/json",
                   },
 
-                  body: JSON.stringify(
-                    chargeBody,
-                  ),
+                  body:
+                    JSON.stringify(
+                      chargeBody,
+                    ),
 
                   signal:
                     controller.signal,
@@ -570,8 +624,11 @@ export const createCvPayment =
           }
 
           /*
-           * Lê a resposta da NetShop.
+           * =====================================================
+           * RESPOSTA NETSHOP
+           * =====================================================
            */
+
           const responseText =
             await response.text();
 
@@ -609,12 +666,6 @@ export const createCvPayment =
             json = null;
           }
 
-          /*
-           * Log da resposta.
-           *
-           * Não mostramos API Key
-           * nem Wallet ID.
-           */
           console.error(
             "NetShop resposta:",
             {
@@ -631,8 +682,11 @@ export const createCvPayment =
           );
 
           /*
-           * NetShop recusou a cobrança.
+           * =====================================================
+           * PAGAMENTO RECUSADO
+           * =====================================================
            */
+
           if (
             !response.ok
           ) {
@@ -683,6 +737,7 @@ export const createCvPayment =
 
             return {
               ok: false as const,
+
               error:
                 detailedError ||
                 `NetShop recusou o pagamento (${response.status}).`,
@@ -690,23 +745,23 @@ export const createCvPayment =
           }
 
           /*
-           * ID da cobrança.
+           * =====================================================
+           * PAGAMENTO CRIADO
+           * =====================================================
            */
+
           const chargeId =
             json?.id ??
             null;
 
-          /*
-           * Estado inicial.
-           */
           const chargeStatus =
             json?.status ??
             "pending";
 
           /*
-           * Guarda os dados da
-           * cobrança no banco.
+           * Guarda o ID da cobrança.
            */
+
           await context.supabase
             .from(
               "cv_purchases",
@@ -724,8 +779,11 @@ export const createCvPayment =
             );
 
           /*
-           * Resposta para o frontend.
+           * =====================================================
+           * DEVOLVE RESULTADO AO FRONTEND
+           * =====================================================
            */
+
           return {
             ok: true as const,
 
@@ -748,9 +806,11 @@ export const createCvPayment =
           );
 
           /*
-           * Marca a compra
-           * como falhada.
+           * Marca compra como falhada
+           * quando não conseguimos comunicar
+           * com a NetShop.
            */
+
           await context.supabase
             .from(
               "cv_purchases",
