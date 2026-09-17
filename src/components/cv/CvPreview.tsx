@@ -7,326 +7,113 @@ type Props = {
   id?: string;
 };
 
-function list(value: string) {
-  return value
-    .split(/[,\n]/)
-    .map((item) => item.trim())
-    .filter(Boolean);
-}
-
-function initials(name: string) {
-  return name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((p) => p[0]?.toUpperCase() ?? "")
-    .join("");
-}
-
 const gold = "#A58C62";
-const goldDark = "#8D754D";
-const goldLight = "#B9A47F";
+const blue = "#315A7A";
+const gray = "#555555";
+
+const page: CSSProperties = {
+  width: "210mm",
+  minHeight: "297mm",
+  background: "#fff",
+  color: "#222",
+  boxSizing: "border-box",
+  overflow: "hidden",
+  fontFamily: "Arial, Helvetica, sans-serif",
+};
+
+const sectionTitle: CSSProperties = {
+  fontSize: 13,
+  fontWeight: 700,
+  letterSpacing: 1.5,
+  marginBottom: 8,
+  textTransform: "uppercase",
+};
 
 function Section({
   title,
   children,
-  color = gold,
-  dark = false,
 }: {
   title: string;
   children: ReactNode;
-  color?: string;
-  dark?: boolean;
 }) {
   return (
-    <section style={{ marginBottom: 24 }}>
-      <h2
-        style={{
-          margin: 0,
-          fontSize: 14,
-          lineHeight: 1.1,
-          fontWeight: 800,
-          letterSpacing: "0.04em",
-          color: dark ? "#fff" : color,
-          fontFamily: "Arial, Helvetica, sans-serif",
-        }}
-      >
-        {title.toUpperCase()}
-      </h2>
-
-      <div
-        style={{
-          width: "100%",
-          height: 1.5,
-          marginTop: 8,
-          marginBottom: 12,
-          background: dark
-            ? "rgba(255,255,255,.35)"
-            : color,
-        }}
-      />
-
+    <section style={{ marginBottom: 18 }}>
+      <div style={sectionTitle}>{title}</div>
       {children}
     </section>
   );
 }
 
-function Contact({
-  data,
-  dark = false,
-  compact = false,
+function Photo({
+  src,
+  circle = false,
 }: {
-  data: CvData;
-  dark?: boolean;
-  compact?: boolean;
+  src?: string;
+  circle?: boolean;
 }) {
-  const color = dark ? "rgba(255,255,255,.78)" : goldLight;
+  if (!src) return null;
 
   return (
-    <div
+    <img
+      src={src}
+      alt=""
       style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: compact ? 6 : 9,
-        fontSize: compact ? 8.5 : 10,
-        color,
-        fontFamily: "Arial, Helvetica, sans-serif",
+        width: 100,
+        height: 100,
+        objectFit: "cover",
+        borderRadius: circle ? "50%" : 4,
+        display: "block",
       }}
-    >
-      {data.phone && (
-        <div style={{ display: "flex", gap: 7, alignItems: "center" }}>
-          <span
-            style={{
-              width: 17,
-              height: 17,
-              borderRadius: "50%",
-              background: dark ? "#fff" : goldDark,
-              color: dark ? "#172033" : "#fff",
-              display: "inline-flex",
-              justifyContent: "center",
-              alignItems: "center",
-              fontSize: 8,
-              fontWeight: 800,
-            }}
-          >
-            ☎
-          </span>
-          <span>{data.phone}</span>
-        </div>
-      )}
-
-      {data.email && (
-        <div style={{ display: "flex", gap: 7, alignItems: "center" }}>
-          <span
-            style={{
-              width: 17,
-              height: 17,
-              borderRadius: "50%",
-              background: dark ? "#fff" : goldDark,
-              color: dark ? "#172033" : "#fff",
-              display: "inline-flex",
-              justifyContent: "center",
-              alignItems: "center",
-              fontSize: 8,
-              fontWeight: 800,
-            }}
-          >
-            ✉
-          </span>
-          <span>{data.email}</span>
-        </div>
-      )}
-
-      {data.location && (
-        <div style={{ display: "flex", gap: 7, alignItems: "center" }}>
-          <span
-            style={{
-              width: 17,
-              height: 17,
-              borderRadius: "50%",
-              background: dark ? "#fff" : goldDark,
-              color: dark ? "#172033" : "#fff",
-              display: "inline-flex",
-              justifyContent: "center",
-              alignItems: "center",
-              fontSize: 8,
-              fontWeight: 800,
-            }}
-          >
-            ●
-          </span>
-          <span>{data.location}</span>
-        </div>
-      )}
-    </div>
+    />
   );
 }
 
-function WaveDecoration({
-  position = "top",
-  color = gold,
-}: {
-  position?: "top" | "bottom";
-  color?: string;
-}) {
+function Contact({ data }: { data: CvData }) {
   return (
-    <svg
-      aria-hidden="true"
-      viewBox="0 0 320 260"
-      style={{
-        position: "absolute",
-        pointerEvents: "none",
-        zIndex: 0,
-        width: 300,
-        height: 245,
-        right: position === "top" ? -25 : -35,
-        top: position === "top" ? -18 : undefined,
-        bottom: position === "bottom" ? -45 : undefined,
-        opacity: 0.55,
-        transform:
-          position === "bottom"
-            ? "rotate(180deg)"
-            : "none",
-      }}
-    >
-      {Array.from({ length: 13 }).map((_, i) => {
-        const y = 22 + i * 15;
-
-        return (
-          <path
-            key={i}
-            d={`M55 ${y}
-              C100 ${y - 10}
-              125 ${y + 15}
-              155 ${y + 28}
-              C195 ${y + 45}
-              220 ${y + 65}
-              285 ${y + 70}`}
-            fill="none"
-            stroke={color}
-            strokeWidth="1.2"
-          />
-        );
-      })}
-    </svg>
+    <div style={{ fontSize: 10.5, lineHeight: 1.7 }}>
+      {data.phone && <div>{data.phone}</div>}
+      {data.email && <div>{data.email}</div>}
+      {data.address && <div>{data.address}</div>}
+      {data.website && <div>{data.website}</div>}
+    </div>
   );
 }
 
 function Experience({
   data,
-  color = goldDark,
-  arrow = true,
-  timeline = false,
-  dark = false,
 }: {
   data: CvData;
-  color?: string;
-  arrow?: boolean;
-  timeline?: boolean;
-  dark?: boolean;
 }) {
-  const items = data.experiences.filter(
-    (item) =>
-      item.role ||
-      item.company ||
-      item.period ||
-      item.description,
-  );
+  const items = data.experience ?? [];
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: 13,
-        position: "relative",
-        paddingLeft: timeline ? 15 : 0,
-        borderLeft: timeline
-          ? `1.5px solid ${color}55`
-          : undefined,
-      }}
-    >
+    <div>
       {items.map((item, index) => (
-        <article
-          key={index}
-          style={{
-            position: "relative",
-            paddingLeft: arrow && !timeline ? 0 : 0,
-          }}
-        >
-          {timeline && (
-            <span
-              style={{
-                position: "absolute",
-                left: -20,
-                top: 4,
-                width: 8,
-                height: 8,
-                borderRadius: "50%",
-                background: color,
-              }}
-            />
-          )}
-
+        <div key={index} style={{ marginBottom: 14 }}>
           <div
             style={{
-              display: "grid",
-              gridTemplateColumns:
-                arrow && !timeline
-                  ? "13px 1fr auto"
-                  : "1fr auto",
-              gap: 3,
-              alignItems: "baseline",
+              display: "flex",
+              justifyContent: "space-between",
+              gap: 12,
             }}
           >
-            {arrow && !timeline && (
-              <span
-                style={{
-                  color,
-                  fontSize: 10,
-                  fontWeight: 900,
-                }}
-              >
-                ➤
-              </span>
-            )}
-
-            <strong
-              style={{
-                fontSize: 13,
-                lineHeight: 1.15,
-                color: dark ? "#fff" : color,
-                fontFamily:
-                  "Arial, Helvetica, sans-serif",
-              }}
-            >
-              {item.role || "Função"}
+            <strong style={{ fontSize: 11.5 }}>
+              {item.position || "Cargo"}
             </strong>
 
-            {item.period && (
-              <span
-                style={{
-                  fontSize: 8.5,
-                  color: dark
-                    ? "rgba(255,255,255,.65)"
-                    : gold,
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {item.period}
-              </span>
-            )}
+            <span style={{ fontSize: 9.5, whiteSpace: "nowrap" }}>
+              {item.startDate || ""}
+              {item.startDate || item.endDate ? " - " : ""}
+              {item.endDate || ""}
+            </span>
           </div>
 
           {item.company && (
             <div
               style={{
-                marginTop: 3,
-                marginLeft:
-                  arrow && !timeline ? 16 : 0,
-                fontSize: 8.5,
-                fontWeight: 800,
-                color: dark ? "#fff" : "#292929",
+                fontSize: 10,
+                fontWeight: 600,
+                marginTop: 2,
               }}
             >
               {item.company}
@@ -334,23 +121,18 @@ function Experience({
           )}
 
           {item.description && (
-            <p
+            <div
               style={{
-                margin:
-                  arrow && !timeline
-                    ? "4px 0 0 16px"
-                    : "4px 0 0",
-                fontSize: 9,
-                lineHeight: 1.45,
-                color: dark
-                  ? "rgba(255,255,255,.72)"
-                  : "#8F7959",
+                fontSize: 10,
+                lineHeight: 1.55,
+                marginTop: 5,
+                whiteSpace: "pre-line",
               }}
             >
               {item.description}
-            </p>
+            </div>
           )}
-        </article>
+        </div>
       ))}
     </div>
   );
@@ -358,74 +140,43 @@ function Experience({
 
 function Education({
   data,
-  color = goldDark,
-  dark = false,
 }: {
   data: CvData;
-  color?: string;
-  dark?: boolean;
 }) {
-  const items = data.education.filter(
-    (item) =>
-      item.course ||
-      item.school ||
-      item.period,
-  );
+  const items = data.education ?? [];
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: 9,
-      }}
-    >
+    <div>
       {items.map((item, index) => (
-        <div key={index}>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              gap: 10,
-              alignItems: "baseline",
-            }}
-          >
-            <strong
-              style={{
-                fontSize: 9.5,
-                color: dark ? "#fff" : color,
-              }}
-            >
-              {item.course || "Formação"}
-            </strong>
-
-            {item.period && (
-              <span
-                style={{
-                  fontSize: 8,
-                  color: dark
-                    ? "rgba(255,255,255,.6)"
-                    : gold,
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {item.period}
-              </span>
-            )}
-          </div>
+        <div key={index} style={{ marginBottom: 12 }}>
+          <strong style={{ fontSize: 11 }}>
+            {item.degree || "Formação"}
+          </strong>
 
           {item.school && (
-            <p
+            <div style={{ fontSize: 10, marginTop: 2 }}>
+              {item.school}
+            </div>
+          )}
+
+          {(item.startDate || item.endDate) && (
+            <div style={{ fontSize: 9.5, marginTop: 2 }}>
+              {item.startDate || ""}
+              {item.startDate || item.endDate ? " - " : ""}
+              {item.endDate || ""}
+            </div>
+          )}
+
+          {item.description && (
+            <div
               style={{
-                margin: "2px 0 0",
-                fontSize: 8.5,
-                color: dark
-                  ? "rgba(255,255,255,.62)"
-                  : "#9C855F",
+                fontSize: 9.5,
+                lineHeight: 1.45,
+                marginTop: 4,
               }}
             >
-              {item.school}
-            </p>
+              {item.description}
+            </div>
           )}
         </div>
       ))}
@@ -435,76 +186,31 @@ function Education({
 
 function Skills({
   data,
-  color = goldDark,
-  dark = false,
-  bars = false,
 }: {
   data: CvData;
-  color?: string;
-  dark?: boolean;
-  bars?: boolean;
 }) {
-  const items = list(data.skills);
+  const skills = data.skills ?? [];
 
   return (
     <div
       style={{
         display: "flex",
-        flexDirection: "column",
-        gap: 7,
+        flexWrap: "wrap",
+        gap: 6,
       }}
     >
-      {items.map((skill, index) => (
-        <div key={`${skill}-${index}`}>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 7,
-              fontSize: 9,
-              color: dark
-                ? "rgba(255,255,255,.78)"
-                : "#9B845E",
-            }}
-          >
-            <span
-              style={{
-                color,
-                fontSize: 8,
-              }}
-            >
-              ➤
-            </span>
-
-            <span>{skill}</span>
-          </div>
-
-          {bars && (
-            <div
-              style={{
-                marginTop: 3,
-                marginLeft: 15,
-                height: 3,
-                background: dark
-                  ? "rgba(255,255,255,.12)"
-                  : `${color}18`,
-                borderRadius: 4,
-              }}
-            >
-              <div
-                style={{
-                  width: `${Math.max(
-                    45,
-                    94 - index * 8,
-                  )}%`,
-                  height: "100%",
-                  background: color,
-                  borderRadius: 4,
-                }}
-              />
-            </div>
-          )}
-        </div>
+      {skills.map((skill, index) => (
+        <span
+          key={index}
+          style={{
+            fontSize: 9.5,
+            padding: "4px 7px",
+            border: "1px solid #ccc",
+            borderRadius: 3,
+          }}
+        >
+          {typeof skill === "string" ? skill : skill.name}
+        </span>
       ))}
     </div>
   );
@@ -512,154 +218,614 @@ function Skills({
 
 function Languages({
   data,
-  color = goldDark,
-  dark = false,
 }: {
   data: CvData;
-  color?: string;
-  dark?: boolean;
 }) {
-  const items = list(data.languages);
+  const languages = data.languages ?? [];
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: 7,
-      }}
-    >
-      {items.map((language, index) => (
+    <div>
+      {languages.map((language, index) => (
         <div
-          key={`${language}-${index}`}
+          key={index}
           style={{
-            display: "flex",
-            gap: 7,
-            alignItems: "center",
-            fontSize: 9,
-            color: dark
-              ? "rgba(255,255,255,.78)"
-              : "#9B845E",
+            fontSize: 10,
+            marginBottom: 5,
           }}
         >
-          <span
-            style={{
-              color,
-              fontSize: 8,
-            }}
-          >
-            ➤
-          </span>
-
-          <span>{language}</span>
+          {typeof language === "string"
+            ? language
+            : `${language.language || ""}${language.level ? ` - ${language.level}` : ""}`}
         </div>
       ))}
     </div>
   );
 }
 
-function Photo({
-  data,
-  size = 90,
-  circle = false,
-  accent = gold,
-  dark = false,
-}: {
-  data: CvData;
-  size?: number;
-  circle?: boolean;
-  accent?: string;
-  dark?: boolean;
-}) {
-  const name = data.fullName || "CV";
-
-  const style: CSSProperties = {
-    width: size,
-    height: size,
-    flexShrink: 0,
-    objectFit: "cover",
-    borderRadius: circle ? "50%" : 8,
-    border: `2px solid ${accent}`,
-  };
-
-  if (data.photo) {
-    return (
-      <img
-        src={data.photo}
-        alt=""
-        style={style}
-      />
-    );
-  }
-
-  return (
-    <div
-      style={{
-        ...style,
-        display: "grid",
-        placeItems: "center",
-        background: dark
-          ? "rgba(255,255,255,.08)"
-          : `${accent}12`,
-        color: accent,
-        fontSize: size / 3,
-        fontWeight: 800,
-      }}
-    >
-      {initials(name)}
-    </div>
-  );
-}
-
 function BasePage({
+  id,
   children,
   background = "#fff",
-  id,
 }: {
+  id?: string;
   children: ReactNode;
   background?: string;
-  id?: string;
 }) {
   return (
     <div
       id={id}
-      className="moza-cv-page"
       style={{
-        position: "relative",
-        width: "100%",
-        maxWidth: 794,
-        minHeight: 1123,
-        margin: "0 auto",
-        overflow: "hidden",
+        ...page,
         background,
-        color: "#222",
-        boxShadow:
-          "0 8px 30px rgba(0,0,0,.08)",
-        fontFamily:
-          "Arial, Helvetica, sans-serif",
       }}
     >
       {children}
-
-      <style>{`
-        @media print {
-          body {
-            margin: 0 !important;
-            padding: 0 !important;
-            background: white !important;
-          }
-
-          .moza-cv-page {
-            width: 210mm !important;
-            max-width: 210mm !important;
-            min-height: 297mm !important;
-            margin: 0 !important;
-            box-shadow: none !important;
-            page-break-after: always;
-          }
-        }
-      `}</style>
     </div>
+  );
+}
+
+function EditorialTemplate({
+  data,
+  id,
+}: {
+  data: CvData;
+  id?: string;
+}) {
+  return (
+    <BasePage id={id}>
+      <div
+        style={{
+          padding: "18mm 17mm",
+          position: "relative",
+        }}
+      >
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "65mm 1fr",
+            minHeight: "260mm",
+            gap: 10,
+          }}
+        >
+          <aside
+            style={{
+              background: "#555",
+              color: "#fff",
+              padding: "16mm 9mm",
+            }}
+          >
+            <Photo src={data.photo} />
+
+            <div
+              style={{
+                marginTop: 18,
+                fontSize: 9,
+                letterSpacing: 1.5,
+              }}
+            >
+              CONTATO
+            </div>
+
+            <div style={{ marginTop: 8 }}>
+              <Contact data={data} />
+            </div>
+
+            <div style={{ marginTop: 25 }}>
+              <div
+                style={{
+                  fontSize: 9,
+                  letterSpacing: 1.5,
+                  marginBottom: 8,
+                }}
+              >
+                HABILIDADES
+              </div>
+
+              <Skills data={data} />
+            </div>
+
+            <div style={{ marginTop: 25 }}>
+              <div
+                style={{
+                  fontSize: 9,
+                  letterSpacing: 1.5,
+                  marginBottom: 8,
+                }}
+              >
+                IDIOMAS
+              </div>
+
+              <Languages data={data} />
+            </div>
+          </aside>
+
+          <main style={{ padding: "5mm 7mm" }}>
+            <h1
+              style={{
+                fontSize: 29,
+                lineHeight: 1,
+                margin: 0,
+                textTransform: "uppercase",
+                letterSpacing: 1,
+                fontWeight: 800,
+              }}
+            >
+              {data.fullName || "O SEU NOME"}
+            </h1>
+
+            <div
+              style={{
+                marginTop: 7,
+                fontSize: 12,
+                color: gray,
+                letterSpacing: 1.5,
+              }}
+            >
+              {data.title || "PROFISSIONAL"}
+            </div>
+
+            {data.summary && (
+              <div
+                style={{
+                  marginTop: 20,
+                  fontSize: 10.5,
+                  lineHeight: 1.65,
+                  whiteSpace: "pre-line",
+                }}
+              >
+                {data.summary}
+              </div>
+            )}
+
+            <div style={{ marginTop: 25 }}>
+              <Section title="Experiência Profissional">
+                <Experience data={data} />
+              </Section>
+
+              <Section title="Formação Académica">
+                <Education data={data} />
+              </Section>
+            </div>
+          </main>
+        </div>
+      </div>
+    </BasePage>
+  );
+}
+
+function CorporateTemplate({
+  data,
+  id,
+}: {
+  data: CvData;
+  id?: string;
+}) {
+  return (
+    <BasePage id={id}>
+      <div style={{ padding: "15mm 16mm" }}>
+        <header
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 18,
+            borderBottom: `3px solid ${blue}`,
+            paddingBottom: 14,
+          }}
+        >
+          <Photo src={data.photo} circle />
+
+          <div>
+            <h1
+              style={{
+                margin: 0,
+                fontSize: 27,
+                textTransform: "uppercase",
+                color: blue,
+              }}
+            >
+              {data.fullName || "O SEU NOME"}
+            </h1>
+
+            <div
+              style={{
+                marginTop: 6,
+                fontSize: 12,
+                letterSpacing: 1,
+              }}
+            >
+              {data.title || "PROFISSIONAL"}
+            </div>
+          </div>
+        </header>
+
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "62mm 1fr",
+            gap: 14,
+            marginTop: 18,
+          }}
+        >
+          <aside
+            style={{
+              background: "#f1f3f5",
+              padding: 12,
+            }}
+          >
+            <Section title="Contacto">
+              <Contact data={data} />
+            </Section>
+
+            <Section title="Habilidades">
+              <Skills data={data} />
+            </Section>
+
+            <Section title="Idiomas">
+              <Languages data={data} />
+            </Section>
+          </aside>
+
+          <main>
+            {data.summary && (
+              <Section title="Perfil Profissional">
+                <div
+                  style={{
+                    fontSize: 10.5,
+                    lineHeight: 1.6,
+                    whiteSpace: "pre-line",
+                  }}
+                >
+                  {data.summary}
+                </div>
+              </Section>
+            )}
+
+            <Section title="Experiência Profissional">
+              <Experience data={data} />
+            </Section>
+
+            <Section title="Formação Académica">
+              <Education data={data} />
+            </Section>
+          </main>
+        </div>
+      </div>
+    </BasePage>
+  );
+}
+
+function MinimalTemplate({
+  data,
+  id,
+}: {
+  data: CvData;
+  id?: string;
+}) {
+  return (
+    <BasePage id={id}>
+      <div style={{ padding: "17mm 18mm" }}>
+        <header
+          style={{
+            borderBottom: "1px solid #222",
+            paddingBottom: 12,
+            marginBottom: 18,
+          }}
+        >
+          <h1
+            style={{
+              margin: 0,
+              fontSize: 30,
+              letterSpacing: 4,
+              fontWeight: 400,
+            }}
+          >
+            {data.fullName || "O SEU NOME"}
+          </h1>
+
+          <div
+            style={{
+              marginTop: 8,
+              fontSize: 10,
+              letterSpacing: 3,
+              textTransform: "uppercase",
+            }}
+          >
+            {data.title || "PROFISSIONAL"}
+          </div>
+        </header>
+
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "55mm 1fr",
+            gap: 15,
+          }}
+        >
+          <aside>
+            <Photo src={data.photo} />
+
+            <div style={{ marginTop: 18 }}>
+              <Section title="Contacto">
+                <Contact data={data} />
+              </Section>
+
+              <Section title="Habilidades">
+                <Skills data={data} />
+              </Section>
+
+              <Section title="Idiomas">
+                <Languages data={data} />
+              </Section>
+            </div>
+          </aside>
+
+          <main>
+            {data.summary && (
+              <Section title="Resumo Profissional">
+                <div
+                  style={{
+                    fontSize: 10.5,
+                    lineHeight: 1.6,
+                    whiteSpace: "pre-line",
+                  }}
+                >
+                  {data.summary}
+                </div>
+              </Section>
+            )}
+
+            <Section title="Experiência Profissional">
+              <Experience data={data} />
+            </Section>
+
+            <Section title="Formação">
+              <Education data={data} />
+            </Section>
+          </main>
+        </div>
+      </div>
+    </BasePage>
+  );
+}
+
+function ExecutiveTemplate({
+  data,
+  id,
+}: {
+  data: CvData;
+  id?: string;
+}) {
+  return (
+    <BasePage id={id}>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "65mm 1fr",
+          minHeight: "297mm",
+        }}
+      >
+        <aside
+          style={{
+            background: "#171717",
+            color: "#fff",
+            padding: "18mm 9mm",
+          }}
+        >
+          <Photo src={data.photo} circle />
+
+          <h1
+            style={{
+              fontFamily: "Georgia, serif",
+              fontSize: 23,
+              lineHeight: 1.15,
+              marginTop: 18,
+              marginBottom: 5,
+            }}
+          >
+            {data.fullName || "O SEU NOME"}
+          </h1>
+
+          <div
+            style={{
+              color: gold,
+              fontSize: 10,
+              letterSpacing: 1.5,
+              textTransform: "uppercase",
+            }}
+          >
+            {data.title || "PROFISSIONAL"}
+          </div>
+
+          <div style={{ marginTop: 28 }}>
+            <div
+              style={{
+                color: gold,
+                fontSize: 9,
+                letterSpacing: 1.5,
+                marginBottom: 8,
+              }}
+            >
+              CONTACTO
+            </div>
+
+            <Contact data={data} />
+          </div>
+
+          <div style={{ marginTop: 28 }}>
+            <div
+              style={{
+                color: gold,
+                fontSize: 9,
+                letterSpacing: 1.5,
+                marginBottom: 8,
+              }}
+            >
+              HABILIDADES
+            </div>
+
+            <Skills data={data} />
+          </div>
+
+          <div style={{ marginTop: 28 }}>
+            <div
+              style={{
+                color: gold,
+                fontSize: 9,
+                letterSpacing: 1.5,
+                marginBottom: 8,
+              }}
+            >
+              IDIOMAS
+            </div>
+
+            <Languages data={data} />
+          </div>
+        </aside>
+
+        <main style={{ padding: "18mm 12mm" }}>
+          {data.summary && (
+            <Section title="Perfil Profissional">
+              <div
+                style={{
+                  fontSize: 10.5,
+                  lineHeight: 1.65,
+                  whiteSpace: "pre-line",
+                }}
+              >
+                {data.summary}
+              </div>
+            </Section>
+          )}
+
+          <Section title="Experiência Profissional">
+            <Experience data={data} />
+          </Section>
+
+          <Section title="Formação Académica">
+            <Education data={data} />
+          </Section>
+        </main>
+      </div>
+    </BasePage>
+  );
+}
+
+function TemplateFour({
+  data,
+  id,
+}: {
+  data: CvData;
+  id?: string;
+}) {
+  return (
+    <BasePage id={id}>
+      <div style={{ padding: "15mm" }}>
+        <header
+          style={{
+            display: "grid",
+            gridTemplateColumns: "58mm 1fr",
+            minHeight: 120,
+          }}
+        >
+          <div
+            style={{
+              background: "#EEEAE3",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: 12,
+            }}
+          >
+            <Photo src={data.photo} circle />
+          </div>
+
+          <div
+            style={{
+              background: "#5D7485",
+              color: "#fff",
+              padding: "18mm 10mm",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+            }}
+          >
+            <h1
+              style={{
+                margin: 0,
+                fontSize: 26,
+                textTransform: "uppercase",
+              }}
+            >
+              {data.fullName || "O SEU NOME"}
+            </h1>
+
+            <div
+              style={{
+                marginTop: 7,
+                fontSize: 11,
+                letterSpacing: 1.5,
+              }}
+            >
+              {data.title || "PROFISSIONAL"}
+            </div>
+          </div>
+        </header>
+
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "58mm 1fr",
+          }}
+        >
+          <aside
+            style={{
+              background: "#EEEAE3",
+              padding: "12mm 8mm",
+            }}
+          >
+            <Section title="Contacto">
+              <Contact data={data} />
+            </Section>
+
+            <Section title="Interesses">
+              <Skills data={data} />
+            </Section>
+
+            <Section title="Idiomas">
+              <Languages data={data} />
+            </Section>
+          </aside>
+
+          <main style={{ padding: "12mm 10mm" }}>
+            {data.summary && (
+              <Section title="Sobre Mim">
+                <div
+                  style={{
+                    fontSize: 10.5,
+                    lineHeight: 1.6,
+                    whiteSpace: "pre-line",
+                  }}
+                >
+                  {data.summary}
+                </div>
+              </Section>
+            )}
+
+            <Section title="Experiência Profissional">
+              <Experience data={data} />
+            </Section>
+
+            <Section title="Percurso Académico">
+              <Education data={data} />
+            </Section>
+
+            <Section title="Habilidades">
+              <Skills data={data} />
+            </Section>
+          </main>
+        </div>
+      </div>
+    </BasePage>
   );
 }
 
@@ -668,62 +834,23 @@ export function CvPreview({
   template,
   id,
 }: Props) {
-  const name =
-    data.fullName || "O SEU NOME";
+  switch (template.id) {
+    case "template-01":
+      return <EditorialTemplate data={data} id={id} />;
 
-  const title =
-    data.title || "Profissional";
+    case "template-02":
+      return <CorporateTemplate data={data} id={id} />;
 
-  /*
-   * ============================================================
-   * MODELO 01
-   * ELEGANTE GOLD
-   *
-   * Este é o modelo baseado diretamente no PDF enviado.
-   * ============================================================
-   */
+    case "template-03":
+      return <MinimalTemplate data={data} id={id} />;
 
-  if (template.layout === "editorial") {
-    return (
-      <BasePage
-        id={id}
-        background="#FFFFFF"
-      >
-        <WaveDecoration position="top" />
-        <WaveDecoration position="bottom" />
+    case "template-04":
+      return <TemplateFour data={data} id={id} />;
 
-        <div
-          style={{
-            position: "relative",
-            zIndex: 2,
-            padding:
-              "76px 48px 48px",
-          }}
-        >
-          <header
-            style={{
-              marginBottom: 48,
-            }}
-          >
-            <h1
-              style={{
-                margin: "0 0 27px 55px",
-                color: gold,
-                fontSize: 19,
-                fontWeight: 800,
-                letterSpacing: ".02em",
-              }}
-            >
-              {name}
-            </h1>
+    case "template-05":
+      return <ExecutiveTemplate data={data} id={id} />;
 
-            <div
-              style={{
-                width: "48%",
-              }}
-            >
-              <h2
-                style={{
-                  margin: "0 0 20px",
-                  color: gold,
-                 
+    default:
+      return <EditorialTemplate data={data} id={id} />;
+  }
+            }
