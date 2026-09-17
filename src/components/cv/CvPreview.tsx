@@ -13,7 +13,7 @@ const DARK = "#252525";
 const LIGHT = "#F1F1EF";
 const CREAM = "#EEEAE3";
 
-const pageStyle: CSSProperties = {
+const PAGE: CSSProperties = {
   width: "210mm",
   minHeight: "297mm",
   background: "#FFFFFF",
@@ -70,9 +70,8 @@ function Photo({
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          color: "#999",
+          color: "#999999",
           fontSize: 9,
-          textAlign: "center",
         }}
       >
         FOTO
@@ -103,12 +102,10 @@ function Contact({
   data: CvData;
   light?: boolean;
 }) {
-  const color = light ? "#FFFFFF" : "#333333";
-
   return (
     <div
       style={{
-        color,
+        color: light ? "#FFFFFF" : "#333333",
         fontSize: 10,
         lineHeight: 1.7,
         wordBreak: "break-word",
@@ -151,7 +148,7 @@ function Skills({
             lineHeight: 1.3,
             padding: "4px 7px",
             border: light
-              ? "1px solid rgba(255,255,255,.35)"
+              ? "1px solid rgba(255,255,255,0.35)"
               : "1px solid #D0D0D0",
             borderRadius: 3,
             color: light ? "#FFFFFF" : "#333333",
@@ -202,13 +199,11 @@ function Experience({
   light?: boolean;
   accent?: string;
 }) {
-  const items = data.experiences ?? [];
-
-  if (!items.length) return null;
+  const experiences = data.experiences ?? [];
 
   return (
     <div>
-      {items.map((item, index) => (
+      {experiences.map((item, index) => (
         <div
           key={index}
           style={{
@@ -288,13 +283,11 @@ function Education({
   light?: boolean;
   accent?: string;
 }) {
-  const items = data.education ?? [];
-
-  if (!items.length) return null;
+  const education = data.education ?? [];
 
   return (
     <div>
-      {items.map((item, index) => (
+      {education.map((item, index) => (
         <div
           key={index}
           style={{
@@ -343,20 +336,12 @@ function Education({
 function BasePage({
   id,
   children,
-  background = "#FFFFFF",
 }: {
   id?: string;
   children: ReactNode;
-  background?: string;
 }) {
   return (
-    <div
-      id={id}
-      style={{
-        ...pageStyle,
-        background,
-      }}
-    >
+    <div id={id} style={PAGE}>
       {children}
     </div>
   );
@@ -477,7 +462,7 @@ function Template01({
           />
 
           {data.summary && (
-            <Section title="Sobre Mim">
+            <Section title="Perfil Profissional">
               <div
                 style={{
                   fontSize: 10.2,
@@ -595,7 +580,10 @@ function Template02({
               </Section>
             )}
 
-            <Section title="Experiência Profissional" color={BLUE}>
+            <Section
+              title="Experiência Profissional"
+              color={BLUE}
+            >
               <Experience data={data} accent={BLUE} />
             </Section>
 
@@ -624,4 +612,482 @@ function Template03({
     <BasePage id={id}>
       <div
         style={{
-          padding:
+          padding: "18mm",
+          fontFamily: "Georgia, Times New Roman, serif",
+        }}
+      >
+        <header
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            gap: 18,
+            borderBottom: "1px solid #333333",
+            paddingBottom: 13,
+          }}
+        >
+          <div>
+            <h1
+              style={{
+                margin: 0,
+                fontSize: 29,
+                fontWeight: 400,
+                letterSpacing: 2,
+                textTransform: "uppercase",
+              }}
+            >
+              {data.fullName || "O SEU NOME"}
+            </h1>
+
+            <div
+              style={{
+                marginTop: 7,
+                fontSize: 10,
+                letterSpacing: 2.5,
+                textTransform: "uppercase",
+              }}
+            >
+              {data.title || "PROFISSIONAL"}
+            </div>
+          </div>
+
+          <Photo src={data.photo} />
+        </header>
+
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "52mm 1fr",
+            gap: 16,
+            marginTop: 18,
+          }}
+        >
+          <aside>
+            <Section title="Contacto">
+              <Contact data={data} />
+            </Section>
+
+            <Section title="Habilidades">
+              <Skills data={data} />
+            </Section>
+
+            <Section title="Idiomas">
+              <Languages data={data} />
+            </Section>
+          </aside>
+
+          <main>
+            {data.summary && (
+              <Section title="Resumo Profissional">
+                <div
+                  style={{
+                    fontFamily: "Arial, Helvetica, sans-serif",
+                    fontSize: 10.2,
+                    lineHeight: 1.65,
+                    whiteSpace: "pre-line",
+                  }}
+                >
+                  {data.summary}
+                </div>
+              </Section>
+            )}
+
+            <Section title="Experiência Profissional">
+              <Experience data={data} />
+            </Section>
+
+            <Section title="Formação">
+              <Education data={data} />
+            </Section>
+          </main>
+        </div>
+      </div>
+    </BasePage>
+  );
+}
+
+/* =========================================================
+   MODELO 04
+   ========================================================= */
+
+function Template04({
+  data,
+  id,
+}: {
+  data: CvData;
+  id?: string;
+}) {
+  return (
+    <BasePage id={id}>
+      <div style={{ padding: "15mm" }}>
+        <header
+          style={{
+            display: "grid",
+            gridTemplateColumns: "58mm 1fr",
+            minHeight: 115,
+          }}
+        >
+          <div
+            style={{
+              background: CREAM,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Photo src={data.photo} circle />
+          </div>
+
+          <div
+            style={{
+              background: "#5D7485",
+              color: "#FFFFFF",
+              padding: "15mm 10mm",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+            }}
+          >
+            <h1
+              style={{
+                margin: 0,
+                fontSize: 25,
+                lineHeight: 1.1,
+                textTransform: "uppercase",
+              }}
+            >
+              {data.fullName || "O SEU NOME"}
+            </h1>
+
+            <div
+              style={{
+                marginTop: 7,
+                fontSize: 10.5,
+                letterSpacing: 1.3,
+              }}
+            >
+              {data.title || "PROFISSIONAL"}
+            </div>
+          </div>
+        </header>
+
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "58mm 1fr",
+          }}
+        >
+          <aside
+            style={{
+              background: CREAM,
+              padding: "12mm 8mm",
+            }}
+          >
+            <Section title="Contacto" color="#5D7485">
+              <Contact data={data} />
+            </Section>
+
+            <Section title="Competências" color="#5D7485">
+              <Skills data={data} />
+            </Section>
+
+            <Section title="Idiomas" color="#5D7485">
+              <Languages data={data} />
+            </Section>
+          </aside>
+
+          <main style={{ padding: "12mm 10mm" }}>
+            {data.summary && (
+              <Section title="Sobre Mim" color="#5D7485">
+                <div
+                  style={{
+                    fontSize: 10.2,
+                    lineHeight: 1.65,
+                    whiteSpace: "pre-line",
+                  }}
+                >
+                  {data.summary}
+                </div>
+              </Section>
+            )}
+
+            <Section
+              title="Experiência Profissional"
+              color="#5D7485"
+            >
+              <Experience
+                data={data}
+                accent="#5D7485"
+              />
+            </Section>
+
+            <Section
+              title="Percurso Académico"
+              color="#5D7485"
+            >
+              <Education
+                data={data}
+                accent="#5D7485"
+              />
+            </Section>
+          </main>
+        </div>
+      </div>
+    </BasePage>
+  );
+}
+
+/* =========================================================
+   MODELO 05
+   ========================================================= */
+
+function Template05({
+  data,
+  id,
+}: {
+  data: CvData;
+  id?: string;
+}) {
+  return (
+    <BasePage id={id}>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "64mm 1fr",
+          minHeight: "297mm",
+        }}
+      >
+        <aside
+          style={{
+            background: "#171717",
+            color: "#FFFFFF",
+            padding: "18mm 9mm",
+          }}
+        >
+          <Photo src={data.photo} circle />
+
+          <h1
+            style={{
+              margin: "18px 0 5px",
+              fontFamily: "Georgia, Times New Roman, serif",
+              fontSize: 23,
+              lineHeight: 1.15,
+            }}
+          >
+            {data.fullName || "O SEU NOME"}
+          </h1>
+
+          <div
+            style={{
+              color: GOLD,
+              fontSize: 9.5,
+              letterSpacing: 1.4,
+              textTransform: "uppercase",
+            }}
+          >
+            {data.title || "PROFISSIONAL"}
+          </div>
+
+          <div
+            style={{
+              width: 35,
+              height: 2,
+              background: GOLD,
+              margin: "17px 0 23px",
+            }}
+          />
+
+          <Section title="Contacto" color={GOLD}>
+            <Contact data={data} light />
+          </Section>
+
+          <Section title="Competências" color={GOLD}>
+            <Skills data={data} light />
+          </Section>
+
+          <Section title="Idiomas" color={GOLD}>
+            <Languages data={data} light />
+          </Section>
+        </aside>
+
+        <main
+          style={{
+            padding: "18mm 12mm",
+          }}
+        >
+          {data.summary && (
+            <Section
+              title="Perfil Profissional"
+              color={GOLD}
+            >
+              <div
+                style={{
+                  fontSize: 10.2,
+                  lineHeight: 1.65,
+                  whiteSpace: "pre-line",
+                }}
+              >
+                {data.summary}
+              </div>
+            </Section>
+          )}
+
+          <Section
+            title="Experiência Profissional"
+            color={GOLD}
+          >
+            <Experience
+              data={data}
+              accent={GOLD}
+            />
+          </Section>
+
+          <Section
+            title="Formação Académica"
+            color={GOLD}
+          >
+            <Education
+              data={data}
+              accent={GOLD}
+            />
+          </Section>
+        </main>
+      </div>
+    </BasePage>
+  );
+}
+
+/* =========================================================
+   COMPONENTE PRINCIPAL
+   ========================================================= */
+
+export function CvPreview({
+  data,
+  template,
+  id,
+}: Props) {
+  switch (template.id) {
+    case "template-01":
+      return (
+        <Template01
+          data={data}
+          id={id}
+        />
+      );
+
+    case "template-02":
+      return (
+        <Template02
+          data={data}
+          id={id}
+        />
+      );
+
+    case "template-03":
+      return (
+        <Template03
+          data={data}
+          id={id}
+        />
+      );
+
+    case "template-04":
+      return (
+        <Template04
+          data={data}
+          id={id}
+        />
+      );
+
+    case "template-05":
+      return (
+        <Template05
+          data={data}
+          id={id}
+        />
+      );
+
+    default:
+      return (
+        <Template01
+          data={data}
+          id={id}
+        />
+      );
+  }
+}
+
+/* =========================================================
+   MINIATURA DOS MODELOS
+   ========================================================= */
+
+export function CvThumb({
+  data,
+  template,
+  width = 150,
+}: {
+  data?: CvData;
+  template: CvTemplate;
+  width?: number;
+}) {
+  const preview: CvData = data ?? {
+    fullName: "O SEU NOME",
+    title: "PROFISSIONAL",
+    email: "email@exemplo.com",
+    phone: "+258 84 000 0000",
+    location: "Maputo, Moçambique",
+    photo: "",
+    summary:
+      "Profissional dedicado, organizado e orientado para resultados.",
+    experiences: [
+      {
+        role: "Cargo profissional",
+        company: "Empresa",
+        period: "2024 - Atual",
+        description:
+          "Principais responsabilidades e resultados profissionais.",
+      },
+    ],
+    education: [
+      {
+        course: "Formação académica",
+        school: "Instituição de ensino",
+        period: "2020 - 2023",
+      },
+    ],
+    skills:
+      "Comunicação, Trabalho em equipa, Organização",
+    languages:
+      "Português - Nativo, Inglês - Intermédio",
+    templateId: template.id,
+  };
+
+  return (
+    <div
+      style={{
+        width,
+        aspectRatio: "210 / 297",
+        overflow: "hidden",
+        borderRadius: 10,
+        background: "#FFFFFF",
+        border: "1px solid #DDDDDD",
+        position: "relative",
+      }}
+    >
+      <div
+        style={{
+          width: "210mm",
+          minHeight: "297mm",
+          transform: `scale(${width / 794})`,
+          transformOrigin: "top left",
+          pointerEvents: "none",
+        }}
+      >
+        <CvPreview
+          data={preview}
+          template={template}
+        />
+      </div>
+    </div>
+  );
+}
