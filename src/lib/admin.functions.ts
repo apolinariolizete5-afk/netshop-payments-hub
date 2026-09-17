@@ -1,74 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-/**
- * Envia uma notificação para os utilizadores inscritos no OneSignal.
- *
- * Importante:
- * - As credenciais ficam apenas no servidor/Render.
- * - Uma falha no OneSignal NÃO impede a publicação da vaga.
- */
-async function sendNewJobNotification(job: {
-  title: string;
-  slug: string;
-}) {
-  const oneSignalAppId = process.env.ONESIGNAL_APP_ID;
-  const oneSignalRestApiKey = process.env.ONESIGNAL_REST_API_KEY;
-
-  if (!oneSignalAppId || !oneSignalRestApiKey) {
-    console.warn(
-      "[OneSignal] ONESIGNAL_APP_ID ou ONESIGNAL_REST_API_KEY não configurado.",
-    );
-    return;
-  }
-
-  const notificationUrl =
-    `https://mozaemprego.onrender.com/vagas/${encodeURIComponent(job.slug)}` +
-    `?app=android`;
-
-  try {
-    const response = await fetch("https://api.onesignal.com/notifications", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Key ${oneSignalRestApiKey}`,
-      },
-      body: JSON.stringify({
-        app_id: oneSignalAppId,
-        target_channel: "push",
-
-        included_segments: ["Subscribed Users"],
-
-        headings: {
-          en: "Nova vaga disponível",
-          pt: "Nova vaga disponível",
-        },
-
-        contents: {
-          en: job.title,
-          pt: job.title,
-        },
-
-        url: notificationUrl,
-      }),
-    });
-
-    const result = await response.text();
-
-    if (!response.ok) {
-      console.error(
-        `[OneSignal] Erro ao enviar notificação (${response.status}):`,
-        result,
-      );
-      return;
-    }
-
-    console.log("[OneSignal] Notificação enviada:", result);
-  } catch (error) {
-    console.error("[OneSignal] Falha ao enviar notificação:", error);
-  }
-}
-
 export interface AdminJobInput {
   id?: string;
   title: string;
@@ -100,6 +32,105 @@ async function assertAdmin(ctx: { supabase: any; userId: string }) {
   }
 }
 
+/**
+ * Envia uma notificação para os dispositivos atualmente
+ * inscritos no OneSignal.
+ */
+async function sendNewJobNotification(job: {
+  title: string;
+  slug: string;
+}) {
+  const oneSignalAppId = process.env.ONESIGNAL_APP_ID;
+  const oneSignalRestApiKey = process.env.ONESIGNAL_REST_API_KEY;
+
+  if (!oneSignalAppId || !oneSignalRestApiKey) {
+    console.warn(
+      "[OneSignal] ONESIGNAL_APP_ID ou ONESIGNAL_REST_API_KEY não configurado."
+    );
+    return;
+  }
+
+  const notificationUrl =
+    `https://mozaemprego.onrender.com/vagas/${encodeURIComponent(job.slug)}` +
+    `?app=android`;
+
+  try {
+    const response = await fetch("https://api.onesignal.com/notifications", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Key ${oneSignalRestApiKey}`,
+      },
+      body: JSON.stringify({
+        app_id: oneSignalAppId,
+        target_channel: "push",
+
+        // Segmento que aparece atualmente no painel OneSignal
+        included_segments: ["Active Subscriptions"],
+
+        headings: {
+          en: "Nova vaga disponível",
+          pt: "Nova vaga disponível",
+        },
+
+        contents: {
+          en: job.title,
+          pt: job.title,
+        },
+
+        url: notificationUrl,
+      }),
+    });
+
+    const responseText = await response.text();
+
+    let result: any = null;
+
+    try {
+      result = responseText ? JSON.parse(responseText) : null;
+    } catch {
+      result = responseText;
+    }
+
+    /*
+     * Não basta o HTTP responder 200.
+     * O OneSignal pode responder 200 e ainda devolver
+     * um objeto contendo "errors".
+     */
+    if (!response.ok) {
+      console.error(
+        "[OneSignal] Erro HTTP ao enviar notificação:",
+        response.status,
+        result
+      );
+      return;
+    }
+
+    if (result?.errors) {
+      console.error(
+        "[OneSignal] A API recusou a notificação:",
+        result
+      );
+      return;
+    }
+
+    console.log(
+      "[OneSignal] Notificação enviada com sucesso:",
+      result
+    );
+
+    console.log(
+      "[OneSignal] URL da vaga:",
+      notificationUrl
+    );
+  } catch (error) {
+    console.error(
+      "[OneSignal] Erro ao enviar notificação:",
+      error
+    );
+  }
+}
+
 export const amIAdmin = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<boolean> => {
@@ -118,44 +149,80 @@ export const adminOverview = createServerFn({ method: "GET" })
 
     const sb = context.supabase;
 
-    const [jobs, published, users, apps, saved, purchases, top] =
-      await Promise.all([
-        sb.from("jobs").select("id", { count: "exact", head: true }),
+    const [
+      jobs,
+      published,
+      users,
+      apps,
+      saved,
+      purchases,
+      top,
+    ] = await Promise.all([
+      sb
+        .from("jobs")
+        .select("id", {
+          count: "exact",
+          head: true,
+        }),
 
-        sb
-          .from("jobs")
-          .select("id", { count: "exact", head: true })
-          .eq("status", "publicada"),
+      sb
+        .from("jobs")
+        .select("id", {
+          count: "exact",
+          head: true,
+        })
+        .eq("status", "publicada"),
 
-        sb.from("profiles").select("id", { count: "exact", head: true }),
+      sb
+        .from("profiles")
+        .select("id", {
+          count: "exact",
+          head: true,
+        }),
 
-        sb
-          .from("applications")
-          .select("id", { count: "exact", head: true }),
+      sb
+        .from("applications")
+        .select("id", {
+          count: "exact",
+          head: true,
+        }),
 
-        sb
-          .from("saved_jobs")
-          .select("id", { count: "exact", head: true }),
+      sb
+        .from("saved_jobs")
+        .select("id", {
+          count: "exact",
+          head: true,
+        }),
 
-        sb
-          .from("cv_purchases")
-          .select("id", { count: "exact", head: true })
-          .eq("status", "paid"),
+      sb
+        .from("cv_purchases")
+        .select("id", {
+          count: "exact",
+          head: true,
+        })
+        .eq("status", "paid"),
 
-        sb
-          .from("jobs")
-          .select("title, slug, views_count")
-          .order("views_count", { ascending: false })
-          .limit(8),
-      ]);
+      sb
+        .from("jobs")
+        .select("title, slug, views_count")
+        .order("views_count", {
+          ascending: false,
+        })
+        .limit(8),
+    ]);
 
     const { data: allViews } = await sb
       .from("jobs")
       .select("views_count");
 
     const totalViews = (
-      (allViews ?? []) as { views_count: number }[]
-    ).reduce((sum, row) => sum + (row.views_count ?? 0), 0);
+      (allViews ?? []) as {
+        views_count: number;
+      }[]
+    ).reduce(
+      (sum, row) => sum + (row.views_count ?? 0),
+      0
+    );
 
     return {
       jobs: jobs.count ?? 0,
@@ -165,6 +232,7 @@ export const adminOverview = createServerFn({ method: "GET" })
       saved: saved.count ?? 0,
       purchases: purchases.count ?? 0,
       totalViews,
+
       topJobs: (top.data ?? []) as {
         title: string;
         slug: string;
@@ -181,9 +249,11 @@ export const adminListJobs = createServerFn({ method: "GET" })
     const { data, error } = await context.supabase
       .from("jobs")
       .select(
-        "id, slug, title, company_name, location, category, job_type, experience_level, summary, description, image_url, status, is_featured, salary_min, salary_max, apply_email, apply_url, views_count, published_at",
+        "id, slug, title, company_name, location, category, job_type, experience_level, summary, description, image_url, status, is_featured, salary_min, salary_max, apply_email, apply_url, views_count, published_at"
       )
-      .order("published_at", { ascending: false })
+      .order("published_at", {
+        ascending: false,
+      })
       .limit(200);
 
     if (error) {
@@ -208,7 +278,9 @@ export const adminSaveJob = createServerFn({ method: "POST" })
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-|-$/g, "");
 
-    let slug = data.slug?.trim() || `${fallbackSlug}-${stamp}`;
+    let slug =
+      data.slug?.trim() ||
+      `${fallbackSlug}-${stamp}`;
 
     const { data: clash } = await context.supabase
       .from("jobs")
@@ -216,32 +288,78 @@ export const adminSaveJob = createServerFn({ method: "POST" })
       .eq("slug", slug)
       .maybeSingle();
 
-    if (clash && (clash as { id: string }).id !== data.id) {
+    if (
+      clash &&
+      (clash as { id: string }).id !== data.id
+    ) {
       slug = `${slug}-${stamp}`;
     }
 
+    const jobTitle =
+      data.title?.trim() || "Vaga sem título";
+
+    const jobStatus =
+      data.status || "publicada";
+
     const row = {
-      title: data.title?.trim() || "Vaga sem título",
+      title: jobTitle,
+
       slug,
-      company_name: data.company_name?.trim() || "Empresa confidencial",
-      location: data.location?.trim() || "Moçambique",
-      category: data.category?.trim() || "Geral",
-      job_type: data.job_type || "tempo_inteiro",
-      experience_level: data.experience_level || "junior",
+
+      company_name:
+        data.company_name?.trim() ||
+        "Empresa confidencial",
+
+      location:
+        data.location?.trim() ||
+        "Moçambique",
+
+      category:
+        data.category?.trim() ||
+        "Geral",
+
+      job_type:
+        data.job_type ||
+        "tempo_inteiro",
+
+      experience_level:
+        data.experience_level ||
+        "junior",
+
       summary:
         data.summary?.trim() ||
         "Consulte os detalhes desta vaga.",
+
       description:
         data.description?.trim() ||
         "Sem descrição detalhada.",
-      image_url: data.image_url || null,
-      status: data.status || "publicada",
-      is_featured: data.is_featured,
-      salary_min: data.salary_min,
-      salary_max: data.salary_max,
-      apply_email: data.apply_email || null,
-      apply_url: data.apply_url || null,
-      created_by: context.userId,
+
+      image_url:
+        data.image_url ||
+        null,
+
+      status:
+        jobStatus,
+
+      is_featured:
+        data.is_featured,
+
+      salary_min:
+        data.salary_min,
+
+      salary_max:
+        data.salary_max,
+
+      apply_email:
+        data.apply_email ||
+        null,
+
+      apply_url:
+        data.apply_url ||
+        null,
+
+      created_by:
+        context.userId,
     } as never;
 
     const isNewJob = !data.id;
@@ -261,18 +379,22 @@ export const adminSaveJob = createServerFn({ method: "POST" })
       throw new Error(error.message);
     }
 
-    /**
+    /*
      * Só envia notificação quando:
      *
-     * 1. É uma vaga nova;
-     * 2. Está publicada.
+     * 1. É uma vaga nova
+     * 2. A vaga foi publicada
      *
-     * Editar uma vaga existente não dispara outra notificação.
+     * Ao editar uma vaga existente não envia
+     * outra notificação.
      */
-    if (isNewJob && row.status === "publicada") {
+    if (
+      isNewJob &&
+      jobStatus === "publicada"
+    ) {
       await sendNewJobNotification({
-        title: row.title,
-        slug: row.slug,
+        title: jobTitle,
+        slug,
       });
     }
 
@@ -297,7 +419,9 @@ export const adminDeleteJob = createServerFn({ method: "POST" })
       throw new Error(error.message);
     }
 
-    return { ok: true };
+    return {
+      ok: true,
+    };
   });
 
 export const adminListUsers = createServerFn({ method: "GET" })
@@ -305,13 +429,18 @@ export const adminListUsers = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     await assertAdmin(context as any);
 
-    const [profiles, roles] = await Promise.all([
+    const [
+      profiles,
+      roles,
+    ] = await Promise.all([
       context.supabase
         .from("profiles")
         .select(
-          "id, full_name, headline, phone, location, created_at",
+          "id, full_name, headline, phone, location, created_at"
         )
-        .order("created_at", { ascending: false })
+        .order("created_at", {
+          ascending: false,
+        })
         .limit(200),
 
       context.supabase
@@ -319,21 +448,30 @@ export const adminListUsers = createServerFn({ method: "GET" })
         .select("user_id, role"),
     ]);
 
-    const roleMap = new Map<string, string[]>();
+    const roleMap =
+      new Map<string, string[]>();
 
-    for (const r of (roles.data ?? []) as {
-      user_id: string;
-      role: string;
-    }[]) {
-      roleMap.set(r.user_id, [
-        ...(roleMap.get(r.user_id) ?? []),
-        r.role,
-      ]);
+    for (
+      const r of (roles.data ?? []) as {
+        user_id: string;
+        role: string;
+      }[]
+    ) {
+      roleMap.set(
+        r.user_id,
+        [
+          ...(roleMap.get(r.user_id) ?? []),
+          r.role,
+        ]
+      );
     }
 
-    return ((profiles.data ?? []) as any[]).map((p) => ({
+    return (
+      (profiles.data ?? []) as any[]
+    ).map((p) => ({
       ...p,
-      roles: roleMap.get(p.id) ?? [],
+      roles:
+        roleMap.get(p.id) ?? [],
     })) as {
       id: string;
       full_name: string | null;
@@ -352,128 +490,197 @@ export const adminSetRole = createServerFn({ method: "POST" })
       userId: string;
       role: string;
       grant: boolean;
-    }) => input,
+    }) => input
   )
   .handler(async ({ data, context }) => {
     await assertAdmin(context as any);
 
     if (data.grant) {
-      const { error } = await context.supabase
-        .from("user_roles")
-        .upsert(
-          {
-            user_id: data.userId,
-            role: data.role,
-          } as never,
-          {
-            onConflict: "user_id,role",
-          },
-        );
+      const { error } =
+        await context.supabase
+          .from("user_roles")
+          .upsert(
+            {
+              user_id: data.userId,
+              role: data.role,
+            } as never,
+            {
+              onConflict:
+                "user_id,role",
+            }
+          );
 
       if (error) {
-        throw new Error(error.message);
+        throw new Error(
+          error.message
+        );
       }
     } else {
-      const { error } = await context.supabase
-        .from("user_roles")
-        .delete()
-        .eq("user_id", data.userId)
-        .eq("role", data.role as never);
+      const { error } =
+        await context.supabase
+          .from("user_roles")
+          .delete()
+          .eq(
+            "user_id",
+            data.userId
+          )
+          .eq(
+            "role",
+            data.role as never
+          );
 
       if (error) {
-        throw new Error(error.message);
+        throw new Error(
+          error.message
+        );
       }
     }
 
-    return { ok: true };
+    return {
+      ok: true,
+    };
   });
 
 export const adminDeleteUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { userId: string }) => input)
+  .inputValidator(
+    (input: { userId: string }) => input
+  )
   .handler(async ({ data, context }) => {
     await assertAdmin(context as any);
 
-    if (data.userId === context.userId) {
+    if (
+      data.userId ===
+      context.userId
+    ) {
       throw new Error(
-        "Não pode eliminar a sua própria conta.",
+        "Não pode eliminar a sua própria conta."
       );
     }
 
     await context.supabase
       .from("user_roles")
       .delete()
-      .eq("user_id", data.userId);
+      .eq(
+        "user_id",
+        data.userId
+      );
 
-    const { error } = await context.supabase
-      .from("profiles")
-      .delete()
-      .eq("id", data.userId);
+    const { error } =
+      await context.supabase
+        .from("profiles")
+        .delete()
+        .eq(
+          "id",
+          data.userId
+        );
 
     if (error) {
-      throw new Error(error.message);
+      throw new Error(
+        error.message
+      );
     }
 
-    return { ok: true };
+    return {
+      ok: true,
+    };
   });
 
 // ---- Acesso de administração: primeiro admin + convites ----
 
-export const publicAdminExists = createServerFn({
-  method: "GET",
-}).handler(async (): Promise<boolean> => {
-  const { getPublicSupabase } = await import(
-    "./supabase-public.server"
+export const publicAdminExists =
+  createServerFn({
+    method: "GET",
+  }).handler(
+    async (): Promise<boolean> => {
+      const {
+        getPublicSupabase,
+      } = await import(
+        "./supabase-public.server"
+      );
+
+      const { data } =
+        await getPublicSupabase().rpc(
+          "admin_exists"
+        );
+
+      return Boolean(data);
+    }
   );
 
-  const { data } = await getPublicSupabase().rpc(
-    "admin_exists",
-  );
+export const claimFirstAdmin =
+  createServerFn({
+    method: "POST",
+  })
+    .middleware([
+      requireSupabaseAuth,
+    ])
+    .handler(
+      async ({
+        context,
+      }): Promise<boolean> => {
+        const { data, error } =
+          await context.supabase.rpc(
+            "claim_first_admin"
+          );
 
-  return Boolean(data);
-});
+        if (error) {
+          throw new Error(
+            error.message
+          );
+        }
 
-export const claimFirstAdmin = createServerFn({
-  method: "POST",
-})
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }): Promise<boolean> => {
-    const { data, error } = await context.supabase.rpc(
-      "claim_first_admin",
+        return Boolean(data);
+      }
     );
 
-    if (error) {
-      throw new Error(error.message);
-    }
+export const adminInviteByEmail =
+  createServerFn({
+    method: "POST",
+  })
+    .middleware([
+      requireSupabaseAuth,
+    ])
+    .inputValidator(
+      (input: {
+        email: string;
+      }) => input
+    )
+    .handler(
+      async ({
+        data,
+        context,
+      }) => {
+        await assertAdmin(
+          context as any
+        );
 
-    return Boolean(data);
-  });
+        const {
+          data: ok,
+          error,
+        } =
+          await context.supabase.rpc(
+            "grant_admin_by_email",
+            {
+              _email:
+                data.email.trim(),
+            }
+          );
 
-export const adminInviteByEmail = createServerFn({
-  method: "POST",
-})
-  .middleware([requireSupabaseAuth])
-  .inputValidator((input: { email: string }) => input)
-  .handler(async ({ data, context }) => {
-    await assertAdmin(context as any);
+        if (error) {
+          throw new Error(
+            error.message
+          );
+        }
 
-    const { data: ok, error } =
-      await context.supabase.rpc(
-        "grant_admin_by_email",
-        {
-          _email: data.email.trim(),
-        },
-      );
+        if (!ok) {
+          throw new Error(
+            "Não existe nenhuma conta com esse email."
+          );
+        }
 
-    if (error) {
-      throw new Error(error.message);
-    }
-
-    if (!ok) {
-      throw new Error(
-        "Não existe nenhuma conta com esse email.",
-      );
-    }
-
-    return { ok: true };
-  });
+        return {
+          ok: true,
+        };
+      }
+    );
