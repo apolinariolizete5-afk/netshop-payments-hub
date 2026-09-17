@@ -27,8 +27,28 @@ type GeminiResponse = {
   }>;
 };
 
-const REQUEST_TIMEOUT = 45000;
+type GeminiCallResult = {
+  response: Response;
+  text: string;
+  json: GeminiResponse | null;
+};
 
+const MODEL_LIST_TIMEOUT = 8000;
+const REQUEST_TIMEOUT = 18000;
+const MAX_RETRIES_PER_MODEL = 1;
+const RETRY_DELAY_MS = 700;
+
+/**
+ * Pequeno atraso usado apenas para erros temporários.
+ * Não deixa o utilizador preso durante minutos.
+ */
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * fetch com timeout.
+ */
 async function fetchWithTimeout(
   url: string,
   options: RequestInit,
@@ -50,52 +70,71 @@ async function fetchWithTimeout(
   }
 }
 
-async function getAvailableModels(apiKey: string) {
-  const response = await fetchWithTimeout(
-    "https://generativelanguage.googleapis.com/v1beta/models",
-    {
-      method: "GET",
-      headers: {
-        "x-goog-api-key": apiKey,
+/**
+ * Obtém os modelos Gemini disponíveis para a API key.
+ */
+async function getAvailableModels(apiKey: string): Promise<string[]> {
+  try {
+    const response = await fetchWithTimeout(
+      "https://generativelanguage.googleapis.com/v1beta/models",
+      {
+        method: "GET",
+        headers: {
+          "x-goog-api-key": apiKey,
+        },
       },
-    },
-    10000
-  );
+      MODEL_LIST_TIMEOUT
+    );
 
-  const text = await response.text();
+    const text = await response.text();
 
-  if (!response.ok) {
+    if (!response.ok) {
+      console.error(
+        "Gemini models.list failed:",
+        response.status,
+        text
+      );
+
+      return [];
+    }
+
+    try {
+      const data = JSON.parse(text) as GeminiModelsResponse;
+
+      return (data.models ?? [])
+        .filter((model) =>
+          model.supportedGenerationMethods?.includes(
+            "generateContent"
+          )
+        )
+        .map((model) => model.name ?? "")
+        .filter(Boolean);
+    } catch (error) {
+      console.error(
+        "Gemini models.list JSON error:",
+        error
+      );
+
+      return [];
+    }
+  } catch (error) {
     console.error(
-      "Gemini models.list failed:",
-      response.status,
-      text
+      "Gemini models.list request error:",
+      error
     );
 
     return [];
   }
-
-  try {
-    const data = JSON.parse(text) as GeminiModelsResponse;
-
-    return (data.models ?? [])
-      .filter((model) =>
-        model.supportedGenerationMethods?.includes("generateContent")
-      )
-      .map((model) => model.name ?? "")
-      .filter(Boolean);
-  } catch {
-    return [];
-  }
 }
 
-function chooseModel(models: string[]) {
-  /*
-   * Prefer modelos Flash rápidos.
-   * A ordem não é fixa: primeiro procuramos modelos
-   * mais recentes que estejam efectivamente disponíveis
-   * para esta API key.
-   */
-
+/**
+ * Ordem de preferência dos modelos.
+ *
+ * A função NÃO assume que todos existem.
+ * Primeiro verifica quais estão realmente disponíveis
+ * para a API key atual.
+ */
+function sortModels(models: string[]): string[] {
   const preferred = [
     "gemini-3.8-flash",
     "gemini-3.7-flash",
@@ -106,33 +145,64 @@ function chooseModel(models: string[]) {
     "gemini-2.0-flash",
   ];
 
+  const normalizedModels = models.filter(Boolean);
+
+  const result: string[] = [];
+
+  /**
+   * Adiciona um modelo somente uma vez.
+   */
+  const addUnique = (model: string) => {
+    if (!result.includes(model)) {
+      result.push(model);
+    }
+  };
+
+  /**
+   * Primeiro os modelos da lista preferida.
+   */
   for (const preferredModel of preferred) {
-    const found = models.find((model) =>
-      model.includes(preferredModel)
+    const matches = normalizedModels.filter((model) =>
+      model.toLowerCase().includes(
+        preferredModel.toLowerCase()
+      )
     );
 
-    if (found) {
-      return found;
+    for (const match of matches) {
+      addUnique(match);
     }
   }
 
-  /*
-   * Se nenhum modelo conhecido for encontrado,
-   * procura qualquer modelo Flash que suporte
-   * generateContent.
+  /**
+   * Depois qualquer outro modelo Flash disponível.
    */
-  const flashModel = models.find((model) =>
-    model.toLowerCase().includes("flash")
-  );
+  for (const model of normalizedModels) {
+    if (model.toLowerCase().includes("flash")) {
+      addUnique(model);
+    }
+  }
 
-  return flashModel ?? null;
+  /**
+   * Por último, outros modelos compatíveis.
+   *
+   * Isso evita falhar completamente caso a API key
+   * tenha apenas um modelo diferente dos conhecidos.
+   */
+  for (const model of normalizedModels) {
+    addUnique(model);
+  }
+
+  return result;
 }
 
+/**
+ * Chamada individual ao Gemini.
+ */
 async function callGemini(
   apiKey: string,
   modelName: string,
   parts: Array<Record<string, unknown>>
-) {
+): Promise<GeminiCallResult> {
   const cleanModelName = modelName.startsWith("models/")
     ? modelName.substring("models/".length)
     : modelName;
@@ -158,6 +228,7 @@ async function callGemini(
         ],
         generationConfig: {
           responseMimeType: "application/json",
+          temperature: 0.1,
         },
       }),
     },
@@ -171,7 +242,7 @@ async function callGemini(
   try {
     json = JSON.parse(text) as GeminiResponse;
   } catch {
-    // Resposta não JSON
+    // Algumas respostas de erro podem não ser JSON.
   }
 
   return {
@@ -181,10 +252,191 @@ async function callGemini(
   };
 }
 
-export const parseCvFile = createServerFn({ method: "POST" })
+/**
+ * Determina se vale a pena tentar outro modelo.
+ */
+function isTemporaryError(status: number): boolean {
+  return (
+    status === 408 ||
+    status === 429 ||
+    status === 500 ||
+    status === 502 ||
+    status === 503 ||
+    status === 504
+  );
+}
+
+/**
+ * Extrai e valida o JSON devolvido pela IA.
+ */
+function parseGeminiJson(raw: string) {
+  const cleaned = raw
+    .replace(/^```json\s*/i, "")
+    .replace(/^```\s*/i, "")
+    .replace(/\s*```$/i, "")
+    .trim();
+
+  /**
+   * Primeira tentativa:
+   * resposta inteira como JSON.
+   */
+  try {
+    return JSON.parse(cleaned);
+  } catch {
+    // Continua para o fallback.
+  }
+
+  /**
+   * Segunda tentativa:
+   * encontra o primeiro objecto JSON dentro da resposta.
+   */
+  const firstBrace = cleaned.indexOf("{");
+  const lastBrace = cleaned.lastIndexOf("}");
+
+  if (
+    firstBrace === -1 ||
+    lastBrace === -1 ||
+    lastBrace <= firstBrace
+  ) {
+    return null;
+  }
+
+  const possibleJson = cleaned.slice(
+    firstBrace,
+    lastBrace + 1
+  );
+
+  try {
+    return JSON.parse(possibleJson);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Garante que o objecto devolvido tenha a estrutura
+ * esperada pelo editor de CV.
+ */
+function normalizeCvJson(value: unknown) {
+  if (
+    !value ||
+    typeof value !== "object" ||
+    Array.isArray(value)
+  ) {
+    return null;
+  }
+
+  const input = value as Record<string, unknown>;
+
+  const experiences = Array.isArray(input.experiences)
+    ? input.experiences.map((item) => {
+        const experience =
+          item && typeof item === "object"
+            ? (item as Record<string, unknown>)
+            : {};
+
+        return {
+          role:
+            typeof experience.role === "string"
+              ? experience.role
+              : "",
+          company:
+            typeof experience.company === "string"
+              ? experience.company
+              : "",
+          period:
+            typeof experience.period === "string"
+              ? experience.period
+              : "",
+          description:
+            typeof experience.description === "string"
+              ? experience.description
+              : "",
+        };
+      })
+    : [];
+
+  const education = Array.isArray(input.education)
+    ? input.education.map((item) => {
+        const educationItem =
+          item && typeof item === "object"
+            ? (item as Record<string, unknown>)
+            : {};
+
+        return {
+          course:
+            typeof educationItem.course === "string"
+              ? educationItem.course
+              : "",
+          school:
+            typeof educationItem.school === "string"
+              ? educationItem.school
+              : "",
+          period:
+            typeof educationItem.period === "string"
+              ? educationItem.period
+              : "",
+        };
+      })
+    : [];
+
+  return {
+    fullName:
+      typeof input.fullName === "string"
+        ? input.fullName
+        : "",
+
+    title:
+      typeof input.title === "string"
+        ? input.title
+        : "",
+
+    email:
+      typeof input.email === "string"
+        ? input.email
+        : "",
+
+    phone:
+      typeof input.phone === "string"
+        ? input.phone
+        : "",
+
+    location:
+      typeof input.location === "string"
+        ? input.location
+        : "",
+
+    summary:
+      typeof input.summary === "string"
+        ? input.summary
+        : "",
+
+    experiences,
+
+    education,
+
+    skills:
+      typeof input.skills === "string"
+        ? input.skills
+        : "",
+
+    languages:
+      typeof input.languages === "string"
+        ? input.languages
+        : "",
+  };
+}
+
+export const parseCvFile = createServerFn({
+  method: "POST",
+})
   .middleware([requireSupabaseAuth])
   .inputValidator((data: ParseInput) => {
-    if (!data || typeof data.base64 !== "string" || !data.base64) {
+    if (
+      !data ||
+      typeof data.base64 !== "string" ||
+      !data.base64
+    ) {
       throw new Error("Ficheiro inválido.");
     }
 
@@ -194,6 +446,10 @@ export const parseCvFile = createServerFn({ method: "POST" })
     const apiKey = process.env["GEMINI_API_KEY"];
 
     if (!apiKey) {
+      console.error(
+        "GEMINI_API_KEY não configurada no servidor."
+      );
+
       return {
         ok: false as const,
         error: "IA não configurada.",
@@ -214,9 +470,17 @@ export const parseCvFile = createServerFn({ method: "POST" })
       };
     }
 
+    /**
+     * Prompt mais rígido para reduzir respostas fora
+     * do formato esperado.
+     */
     const instruction =
-      "Analisa este currículo e devolve APENAS JSON válido. " +
-      "Não escrevas explicações, Markdown ou texto fora do JSON. " +
+      "Analisa este currículo cuidadosamente e extrai apenas " +
+      "as informações que realmente aparecem no documento. " +
+      "Devolve APENAS um objecto JSON válido. " +
+      "Não escrevas Markdown. " +
+      "Não uses blocos ```json. " +
+      "Não escrevas explicações antes ou depois do JSON. " +
       "Usa exactamente esta estrutura: " +
       "{ " +
       '"fullName": "", ' +
@@ -231,8 +495,12 @@ export const parseCvFile = createServerFn({ method: "POST" })
       '"languages": "" ' +
       "}. " +
       "Usa português. " +
-      "Se uma informação não existir no currículo, deixa o campo vazio. " +
-      "Não inventes informações.";
+      "Se uma informação não existir no currículo, deixa " +
+      "o campo vazio. " +
+      "Não inventes nomes, empresas, datas, cursos, " +
+      "competências ou outras informações. " +
+      "Mantém datas e nomes exactamente como aparecem " +
+      "quando forem legíveis.";
 
     const parts: Array<Record<string, unknown>> = [
       {
@@ -240,6 +508,9 @@ export const parseCvFile = createServerFn({ method: "POST" })
       },
     ];
 
+    /**
+     * Envia a imagem ou PDF directamente para o Gemini.
+     */
     if (isImage) {
       parts.push({
         inline_data: {
@@ -256,11 +527,11 @@ export const parseCvFile = createServerFn({ method: "POST" })
       });
     }
 
-    /*
-     * 1. Descobre os modelos realmente disponíveis
-     * para ESTA API KEY.
+    /**
+     * Descobre os modelos disponíveis para esta API key.
      */
-    const availableModels = await getAvailableModels(apiKey);
+    const availableModels =
+      await getAvailableModels(apiKey);
 
     console.log(
       "Gemini models disponíveis:",
@@ -271,171 +542,278 @@ export const parseCvFile = createServerFn({ method: "POST" })
       return {
         ok: false as const,
         error:
-          "Não foi possível obter os modelos disponíveis da Gemini.",
+          "A IA está temporariamente indisponível. Tente novamente.",
       };
     }
 
-    /*
-     * 2. Escolhe automaticamente um modelo compatível.
+    /**
+     * Ordena os modelos por preferência.
      */
-    const selectedModel = chooseModel(availableModels);
-
-    if (!selectedModel) {
-      return {
-        ok: false as const,
-        error:
-          "A sua Gemini API Key não possui um modelo compatível para este recurso.",
-      };
-    }
-
-    console.log(
-      "Gemini modelo seleccionado:",
-      selectedModel
+    const modelsToTry = sortModels(
+      availableModels
     );
 
-    try {
-      /*
-       * 3. Apenas UMA chamada.
-       *
-       * Não fazemos três retries de 45 segundos.
-       * Assim o utilizador nunca fica preso durante minutos.
-       */
-      const result = await callGemini(
-        apiKey,
-        selectedModel,
-        parts
-      );
+    console.log(
+      "Gemini modelos que serão tentados:",
+      modelsToTry
+    );
+
+    /**
+     * Guarda o último erro apenas nos logs.
+     * Nunca é mostrado directamente ao utilizador.
+     */
+    let lastStatus: number | null = null;
+
+    /**
+     * Tenta os modelos sequencialmente.
+     *
+     * Exemplo:
+     *
+     * Gemini 3.8 → 503
+     * Gemini 3.7 → 503
+     * Gemini 3.6 → sucesso
+     *
+     * O utilizador recebe apenas o resultado final.
+     */
+    for (
+      let modelIndex = 0;
+      modelIndex < modelsToTry.length;
+      modelIndex++
+    ) {
+      const model = modelsToTry[modelIndex];
 
       console.log(
-        "Gemini status:",
-        result.response.status
+        `Gemini tentativa ${modelIndex + 1}/${modelsToTry.length}:`,
+        model
       );
 
-      if (!result.response.ok) {
-        console.error(
-          "Gemini CV parse failed:",
-          result.response.status,
-          result.text
-        );
-
-        if (
-          result.response.status === 401 ||
-          result.response.status === 403
-        ) {
-          return {
-            ok: false as const,
-            error:
-              "A chave da Gemini API é inválida ou não está autorizada.",
-          };
-        }
-
-        if (result.response.status === 429) {
-          return {
-            ok: false as const,
-            error:
-              "A Gemini está temporariamente com limite de pedidos. Tente novamente mais tarde.",
-          };
-        }
-
-        if (result.response.status === 503) {
-          return {
-            ok: false as const,
-            error:
-              "A Gemini está temporariamente ocupada. Tente novamente daqui a pouco.",
-          };
-        }
-
-        if (result.response.status === 400) {
-          return {
-            ok: false as const,
-            error:
-              "A Gemini não conseguiu processar este ficheiro. Tente outro PDF ou uma fotografia mais nítida.",
-          };
-        }
-
-        return {
-          ok: false as const,
-          error:
-            "A Gemini não conseguiu processar o CV neste momento.",
-        };
-      }
-
-      const raw =
-        result.json?.candidates?.[0]?.content?.parts
-          ?.map((part) => part.text ?? "")
-          .join("") ?? "";
-
-      if (!raw) {
-        return {
-          ok: false as const,
-          error:
-            "A IA não devolveu os dados do currículo.",
-        };
-      }
-
-      const cleaned = raw
-        .replace(/^```json\s*/i, "")
-        .replace(/^```\s*/i, "")
-        .replace(/\s*```$/i, "")
-        .trim();
-
-      /*
-       * Tenta interpretar a resposta directamente.
-       */
-      try {
-        const parsed = JSON.parse(cleaned);
-
-        return {
-          ok: true as const,
-          cvJson: JSON.stringify(parsed),
-        };
-      } catch {
-        /*
-         * Fallback para encontrar o JSON dentro da resposta.
-         */
-        const match = cleaned.match(/\{[\s\S]*\}/);
-
-        if (!match) {
-          return {
-            ok: false as const,
-            error:
-              "A IA respondeu, mas não foi possível interpretar os dados do CV.",
-          };
-        }
-
+      for (
+        let retry = 0;
+        retry <= MAX_RETRIES_PER_MODEL;
+        retry++
+      ) {
         try {
-          const parsed = JSON.parse(match[0]);
+          /**
+           * Retry curto somente quando o erro é temporário.
+           */
+          if (retry > 0) {
+            await sleep(
+              RETRY_DELAY_MS * retry
+            );
+
+            console.log(
+              "Gemini retry:",
+              model,
+              retry
+            );
+          }
+
+          const result = await callGemini(
+            apiKey,
+            model,
+            parts
+          );
+
+          lastStatus = result.response.status;
+
+          console.log(
+            "Gemini status:",
+            result.response.status,
+            "modelo:",
+            model
+          );
+
+          /**
+           * Chave inválida ou sem autorização.
+           * Não adianta tentar outros modelos.
+           */
+          if (
+            result.response.status === 401 ||
+            result.response.status === 403
+          ) {
+            console.error(
+              "Gemini autorização falhou:",
+              result.response.status,
+              result.text
+            );
+
+            return {
+              ok: false as const,
+              error:
+                "A IA não está disponível neste momento.",
+            };
+          }
+
+          /**
+           * Pedido inválido.
+           * Outro modelo provavelmente receberia
+           * exactamente o mesmo pedido inválido.
+           */
+          if (result.response.status === 400) {
+            console.error(
+              "Gemini request inválido:",
+              result.text
+            );
+
+            return {
+              ok: false as const,
+              error:
+                "Não foi possível processar este ficheiro. Tente outro PDF ou uma fotografia mais nítida.",
+            };
+          }
+
+          /**
+           * Erros temporários.
+           *
+           * Se ainda houver retry, repete.
+           * Depois passa imediatamente para outro modelo.
+           */
+          if (
+            !result.response.ok &&
+            isTemporaryError(
+              result.response.status
+            )
+          ) {
+            console.warn(
+              "Gemini temporariamente indisponível:",
+              result.response.status,
+              "modelo:",
+              model
+            );
+
+            continue;
+          }
+
+          /**
+           * Outros erros HTTP.
+           * Tenta outro modelo, mas sem ficar preso
+           * repetindo indefinidamente.
+           */
+          if (!result.response.ok) {
+            console.error(
+              "Gemini CV parse failed:",
+              result.response.status,
+              result.text
+            );
+
+            break;
+          }
+
+          /**
+           * Extrai o texto da resposta.
+           */
+          const raw =
+            result.json?.candidates?.[0]?.content?.parts
+              ?.map((part) => part.text ?? "")
+              .join("") ?? "";
+
+          if (!raw) {
+            console.warn(
+              "Gemini não devolveu conteúdo:",
+              model
+            );
+
+            /**
+             * Se a resposta foi 200 mas vazia,
+             * tenta outro modelo.
+             */
+            break;
+          }
+
+          /**
+           * Converte a resposta para JSON.
+           */
+          const parsed = parseGeminiJson(raw);
+
+          if (!parsed) {
+            console.warn(
+              "Gemini devolveu JSON inválido:",
+              model
+            );
+
+            /**
+             * Uma segunda tentativa neste mesmo modelo
+             * pode resolver uma resposta malformada.
+             */
+            if (retry < MAX_RETRIES_PER_MODEL) {
+              continue;
+            }
+
+            break;
+          }
+
+          /**
+           * Normaliza os campos para garantir compatibilidade
+           * com o editor de CV.
+           */
+          const normalized =
+            normalizeCvJson(parsed);
+
+          if (!normalized) {
+            console.warn(
+              "Gemini JSON incompatível:",
+              model
+            );
+
+            break;
+          }
+
+          console.log(
+            "Gemini CV parse concluído com sucesso:",
+            model
+          );
 
           return {
             ok: true as const,
-            cvJson: JSON.stringify(parsed),
+            cvJson: JSON.stringify(
+              normalized
+            ),
           };
-        } catch {
-          return {
-            ok: false as const,
-            error:
-              "A IA respondeu com dados inválidos. Tente novamente.",
-          };
+        } catch (error) {
+          console.error(
+            "Gemini request error:",
+            model,
+            error
+          );
+
+          /**
+           * Timeout ou erro de rede:
+           * tenta o próximo modelo.
+           */
+          if (
+            error instanceof Error &&
+            error.name === "AbortError"
+          ) {
+            console.warn(
+              "Gemini timeout:",
+              model
+            );
+
+            break;
+          }
+
+          /**
+           * Não deixa uma falha de rede interromper
+           * toda a cadeia de fallback.
+           */
+          break;
         }
       }
-    } catch (error) {
-      console.error("Gemini request error:", error);
-
-      if (
-        error instanceof Error &&
-        error.name === "AbortError"
-      ) {
-        return {
-          ok: false as const,
-          error:
-            "A IA demorou demasiado a responder. Tente novamente.",
-        };
-      }
-
-      return {
-        ok: false as const,
-        error:
-          "Não foi possível contactar a Gemini. Tente novamente.",
-      };
     }
+
+    console.error(
+      "Todos os modelos Gemini falharam.",
+      "Último status:",
+      lastStatus
+    );
+
+    /**
+     * Mensagem limpa para o utilizador.
+     * Os detalhes ficam apenas nos logs do Render.
+     */
+    return {
+      ok: false as const,
+      error:
+        "A IA está temporariamente indisponível. Tente novamente.",
+    };
   });
