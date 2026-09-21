@@ -70,7 +70,15 @@ function NotificacoesPage() {
           <Button variant="ghost" className="gap-1" onClick={() => markAll.mutate()}>
             <CheckCheck className="h-4 w-4" /> Marcar lidas
           </Button>
-        )}
+        )} await Notification.requestPermission();
+const reg = await navigator.serviceWorker.ready;
+reg.active?.postMessage({
+  type: "SHOW_NOTIFICATION",
+  title: "Nova vaga!",
+  body: "Toque para ver a vaga.",
+  url: "/notificacoes",
+});
+
       </header>
 
       {items.length === 0 ? (
