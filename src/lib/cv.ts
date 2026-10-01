@@ -161,10 +161,9 @@ export const SAMPLE_CV: CvData = {
 
 export const CV_TEMPLATES: CvTemplate[] = [
   {
-    id: "editorial",
-    name: "Editorial",
-    description:
-      "Visual sofisticado inspirado em revistas e portfolios profissionais.",
+    id: "template-01",
+    name: "Modelo 1",
+    description: "Modelo profissional com coluna lateral e apresentação clara da carreira.",
     layout: "editorial",
     accent: "#111827",
     surface: "#F8F7F4",
@@ -172,12 +171,10 @@ export const CV_TEMPLATES: CvTemplate[] = [
     font: "serif",
     premium: true,
   },
-
   {
-    id: "executive",
-    name: "Executive",
-    description:
-      "Elegante e poderoso para gestores, directores e profissionais sénior.",
+    id: "template-02",
+    name: "Modelo 2",
+    description: "Modelo executivo com destaque visual para perfil e contactos.",
     layout: "executive",
     accent: "#172033",
     surface: "#F5F6F8",
@@ -185,12 +182,10 @@ export const CV_TEMPLATES: CvTemplate[] = [
     font: "sans",
     premium: true,
   },
-
   {
-    id: "corporate",
-    name: "Corporate",
-    description:
-      "Estrutura internacional para bancos, empresas e grandes organizações.",
+    id: "template-03",
+    name: "Modelo 3",
+    description: "Modelo corporativo equilibrado para candidaturas profissionais.",
     layout: "corporate",
     accent: "#1E3A5F",
     surface: "#FFFFFF",
@@ -198,38 +193,32 @@ export const CV_TEMPLATES: CvTemplate[] = [
     font: "sans",
     premium: true,
   },
-
   {
-    id: "swiss",
-    name: "Swiss",
-    description:
-      "Design suíço com grid rigoroso, tipografia forte e máximo equilíbrio.",
+    id: "template-04",
+    name: "Modelo 4",
+    description: "Modelo visual com estrutura rigorosa e leitura rápida.",
     layout: "swiss",
-    accent: "#111111",
-    surface: "#FFFFFF",
-    photoShape: "none",
+    accent: "#5D7485",
+    surface: "#EEEAE3",
+    photoShape: "circle",
     font: "sans",
     premium: true,
   },
-
   {
-    id: "minimal",
-    name: "Minimal",
-    description:
-      "Minimalismo premium com muito espaço e leitura extremamente limpa.",
+    id: "template-05",
+    name: "Modelo 5",
+    description: "Modelo elegante de alto contraste para perfis profissionais.",
     layout: "minimal",
-    accent: "#18181B",
+    accent: "#A58C62",
     surface: "#FFFFFF",
-    photoShape: "none",
-    font: "sans",
+    photoShape: "circle",
+    font: "serif",
     premium: true,
   },
-
   {
-    id: "timeline",
-    name: "Timeline",
-    description:
-      "Apresenta a evolução da carreira através de uma linha cronológica.",
+    id: "template-06",
+    name: "Modelo 6",
+    description: "Modelo cronológico para destacar a evolução da carreira.",
     layout: "timeline",
     accent: "#4F46E5",
     surface: "#FFFFFF",
@@ -237,125 +226,7 @@ export const CV_TEMPLATES: CvTemplate[] = [
     font: "sans",
     premium: true,
   },
-
-  {
-    id: "creative",
-    name: "Creative",
-    description:
-      "Composição ousada para marketing, comunicação, design e áreas criativas.",
-    layout: "creative",
-    accent: "#7C3AED",
-    surface: "#FAF5FF",
-    photoShape: "square",
-    font: "display",
-    premium: true,
-  },
-
-  {
-    id: "academic",
-    name: "Academic",
-    description:
-      "Estrutura formal para investigadores, professores e profissionais académicos.",
-    layout: "academic",
-    accent: "#374151",
-    surface: "#FFFFFF",
-    photoShape: "none",
-    font: "serif",
-    premium: true,
-  },
-
-  {
-    id: "tech",
-    name: "Technology",
-    description:
-      "Visual moderno inspirado em produtos digitais e empresas de tecnologia.",
-    layout: "tech",
-    accent: "#06B6D4",
-    surface: "#0B1120",
-    photoShape: "square",
-    font: "sans",
-    premium: true,
-  },
-
-  {
-    id: "portfolio",
-    name: "Portfolio",
-    description:
-      "CV visual para profissionais que precisam destacar projectos e competências.",
-    layout: "portfolio",
-    accent: "#8B5CF6",
-    surface: "#F5F3FF",
-    photoShape: "square",
-    font: "display",
-    premium: true,
-  },
-
-  {
-    id: "first-job",
-    name: "Primeiro Emprego",
-    description:
-      "Pensado para estudantes, recém-formados e candidatos sem muita experiência.",
-    layout: "first-job",
-    accent: "#2563EB",
-    surface: "#EFF6FF",
-    photoShape: "circle",
-    font: "sans",
-    premium: true,
-  },
-
-  {
-    id: "finance",
-    name: "Finance",
-    description:
-      "Sério, preciso e elegante para banca, contabilidade e finanças.",
-    layout: "finance",
-    accent: "#0F3D3E",
-    surface: "#F7FAFA",
-    photoShape: "none",
-    font: "serif",
-    premium: true,
-  },
-
-  {
-    id: "development",
-    name: "Development",
-    description:
-      "Estrutura profissional para ONG, desenvolvimento, projectos e organizações internacionais.",
-    layout: "development",
-    accent: "#166534",
-    surface: "#F0FDF4",
-    photoShape: "circle",
-    font: "sans",
-    premium: true,
-  },
-
-  {
-    id: "ats",
-    name: "ATS Pro",
-    description:
-      "Optimizado para sistemas automáticos de recrutamento e leitura de CVs.",
-    layout: "ats",
-    accent: "#111827",
-    surface: "#FFFFFF",
-    photoShape: "none",
-    font: "sans",
-    premium: true,
-  },
-
-  {
-    id: "mozambique",
-    name: "Moçambique",
-    description:
-      "Design premium inspirado na identidade visual e profissional de Moçambique.",
-    layout: "mozambique",
-    accent: "#006B3C",
-    surface: "#F7F7F5",
-    photoShape: "circle",
-    font: "sans",
-    premium: true,
-  },
 ];
-
 export const CV_STORAGE_KEY = "moza-cv-draft";
 
 export function loadCv(): CvData {
@@ -403,28 +274,13 @@ export function saveCv(data: CvData) {
 
 export function previewData(data?: CvData): CvData {
   if (!data) {
-    return { ...SAMPLE_CV };
+    return { ...EMPTY_CV };
   }
 
-  const text = (value: string | undefined, fallback: string) =>
-    value && value.trim() ? value : fallback;
-
   return {
+    ...EMPTY_CV,
     ...data,
-    fullName: text(data.fullName, SAMPLE_CV.fullName),
-    title: text(data.title, SAMPLE_CV.title),
-    summary: text(data.summary, SAMPLE_CV.summary),
-    email: text(data.email, SAMPLE_CV.email),
-    phone: text(data.phone, SAMPLE_CV.phone),
-    location: text(data.location, SAMPLE_CV.location),
-    photo: data.photo || SAMPLE_CV.photo,
-    experiences: data.experiences?.some((e) => e.role || e.company)
-      ? data.experiences
-      : SAMPLE_CV.experiences,
-    education: data.education?.some((e) => e.course || e.school)
-      ? data.education
-      : SAMPLE_CV.education,
-    skills: data.skills?.length ? data.skills : SAMPLE_CV.skills,
-    languages: data.languages?.length ? data.languages : SAMPLE_CV.languages,
+    experiences: data.experiences?.length ? data.experiences : [],
+    education: data.education?.length ? data.education : [],
   };
 }
