@@ -882,6 +882,101 @@ function CriarCvPage() {
                     }
                   />
                 </div>
+
+                <div className="rounded-2xl border border-dashed border-border bg-background p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-bold">Campos / secções adicionais</p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Adicione qualquer informação que não esteja nos campos acima.
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="gap-1"
+                      onClick={() =>
+                        set(
+                          "customSections",
+                          [
+                            ...data.customSections,
+                            {
+                              id: `custom-${Date.now()}-${data.customSections.length}`,
+                              title: "",
+                              content: "",
+                            },
+                          ],
+                        )
+                      }
+                    >
+                      <Plus className="h-4 w-4" />
+                      Adicionar
+                    </Button>
+                  </div>
+
+                  {data.customSections.length > 0 && (
+                    <div className="mt-4 space-y-3">
+                      {data.customSections.map((section, index) => (
+                        <div
+                          key={section.id}
+                          className="rounded-xl border border-border bg-card p-3"
+                        >
+                          <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
+                            <Field
+                              label="Nome da secção"
+                              placeholder="Ex.: Certificações, Projectos, Voluntariado"
+                              value={section.title}
+                              onChange={(v) =>
+                                set(
+                                  "customSections",
+                                  data.customSections.map((item, i) =>
+                                    i === index ? { ...item, title: v } : item,
+                                  ),
+                                )
+                              }
+                            />
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="mt-5 gap-1 text-destructive"
+                              onClick={() =>
+                                set(
+                                  "customSections",
+                                  data.customSections.filter((_, i) => i !== index),
+                                )
+                              }
+                            >
+                              <Trash2 className="h-4 w-4" />
+                              Remover
+                            </Button>
+                          </div>
+
+                          <div className="mt-3">
+                            <Label>Conteúdo</Label>
+                            <Textarea
+                              rows={4}
+                              className="mt-1"
+                              placeholder="Escreva aqui a informação adicional..."
+                              value={section.content}
+                              onChange={(e) =>
+                                set(
+                                  "customSections",
+                                  data.customSections.map((item, i) =>
+                                    i === index
+                                      ? { ...item, content: e.target.value }
+                                      : item,
+                                  ),
+                                )
+                              }
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
