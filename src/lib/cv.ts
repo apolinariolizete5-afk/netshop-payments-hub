@@ -135,6 +135,7 @@ export const SAMPLE_CV: CvData = {
       period: "2019",
     },
   ],
+  customSections: [],
   skills:
     "Gestão de operações, Liderança, Excel, Gestão administrativa, Comunicação, Planeamento",
   languages: "Português — Nativo, Inglês — Intermédio",
