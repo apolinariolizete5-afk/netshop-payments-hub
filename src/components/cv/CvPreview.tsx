@@ -347,6 +347,38 @@ function BasePage({
   );
 }
 
+function CustomSections({
+  data,
+  accent = DARK,
+}: {
+  data: CvData;
+  accent?: string;
+}) {
+  const sections = data.customSections?.filter(
+    (section) => section.title.trim() || section.content.trim(),
+  ) ?? [];
+
+  if (!sections.length) return null;
+
+  return (
+    <>
+      {sections.map((section) => (
+        <Section key={section.id} title={section.title || "Secção adicional"} color={accent}>
+          <div
+            style={{
+              fontSize: 10.2,
+              lineHeight: 1.65,
+              whiteSpace: "pre-line",
+            }}
+          >
+            {section.content}
+          </div>
+        </Section>
+      ))}
+    </>
+  );
+}
+
 /* =========================================================
    MODELO 01
    ========================================================= */
@@ -698,6 +730,7 @@ function Template03({
 
             <Section title="Formação">
               <Education data={data} />
+              <CustomSections data={data} accent={DARK} />
             </Section>
           </main>
         </div>
@@ -1045,6 +1078,8 @@ function Template06({
             <Section title="Formação Académica" color={accent}>
               <Education data={data} accent={accent} />
             </Section>
+
+            <CustomSections data={data} accent={accent} />
           </main>
 
           <aside
