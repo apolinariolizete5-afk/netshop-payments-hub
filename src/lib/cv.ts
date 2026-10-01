@@ -11,6 +11,12 @@ export type CvEducation = {
   period: string;
 };
 
+export type CvCustomSection = {
+  id: string;
+  title: string;
+  content: string;
+};
+
 export type CvLayout =
   | "editorial"
   | "executive"
@@ -50,6 +56,7 @@ export type CvData = {
   summary: string;
   experiences: CvExperience[];
   education: CvEducation[];
+  customSections: CvCustomSection[];
   skills: string;
   languages: string;
   templateId: string;
@@ -78,6 +85,7 @@ export const EMPTY_CV: CvData = {
       period: "",
     },
   ],
+  customSections: [],
   skills: "",
   languages: "",
   templateId: "editorial",
