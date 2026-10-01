@@ -957,6 +957,116 @@ function Template05({
   );
 }
 
+
+/* =========================================================
+   MODELO 06
+   ========================================================= */
+
+function Template06({
+  data,
+  id,
+}: {
+  data: CvData;
+  id?: string;
+}) {
+  const accent = "#4F46E5";
+
+  return (
+    <BasePage id={id}>
+      <div style={{ padding: "15mm 16mm" }}>
+        <header
+          style={{
+            display: "grid",
+            gridTemplateColumns: "30mm 1fr",
+            gap: 10,
+            alignItems: "center",
+            paddingBottom: "9mm",
+            borderBottom: `3px solid ${accent}`,
+          }}
+        >
+          <Photo src={data.photo} circle />
+
+          <div>
+            <h1
+              style={{
+                margin: 0,
+                fontSize: 25,
+                lineHeight: 1.08,
+                color: "#171717",
+              }}
+            >
+              {data.fullName || "O SEU NOME"}
+            </h1>
+            <div
+              style={{
+                marginTop: 6,
+                color: accent,
+                fontSize: 10.5,
+                fontWeight: 700,
+                letterSpacing: 1.1,
+                textTransform: "uppercase",
+              }}
+            >
+              {data.title || "PROFISSIONAL"}
+            </div>
+            <div style={{ marginTop: 7 }}>
+              <Contact data={data} />
+            </div>
+          </div>
+        </header>
+
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 55mm",
+            gap: "11mm",
+            marginTop: "10mm",
+          }}
+        >
+          <main>
+            {data.summary && (
+              <Section title="Perfil" color={accent}>
+                <div
+                  style={{
+                    fontSize: 10.2,
+                    lineHeight: 1.65,
+                    whiteSpace: "pre-line",
+                  }}
+                >
+                  {data.summary}
+                </div>
+              </Section>
+            )}
+
+            <Section title="Experiência Profissional" color={accent}>
+              <Experience data={data} accent={accent} />
+            </Section>
+
+            <Section title="Formação Académica" color={accent}>
+              <Education data={data} accent={accent} />
+            </Section>
+          </main>
+
+          <aside
+            style={{
+              borderLeft: `1px solid ${accent}30`,
+              paddingLeft: "8mm",
+            }}
+          >
+            <Section title="Competências" color={accent}>
+              <Skills data={data} />
+            </Section>
+
+            <Section title="Idiomas" color={accent}>
+              <Languages data={data} />
+            </Section>
+          </aside>
+        </div>
+      </div>
+    </BasePage>
+  );
+}
+
 /* =========================================================
    COMPONENTE PRINCIPAL
    ========================================================= */
@@ -1002,6 +1112,14 @@ export function CvPreview({
     case "template-05":
       return (
         <Template05
+          data={data}
+          id={id}
+        />
+      );
+
+    case "template-06":
+      return (
+        <Template06
           data={data}
           id={id}
         />
