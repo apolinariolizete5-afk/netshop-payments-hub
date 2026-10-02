@@ -396,6 +396,7 @@ function CustomSections({
 function Template01({
   data,
   id,
+  fullPage = false,
 }: {
   data: CvData;
   id?: string;
