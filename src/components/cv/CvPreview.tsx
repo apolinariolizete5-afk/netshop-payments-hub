@@ -898,7 +898,7 @@ function Template05({
         style={{
           display: "grid",
           gridTemplateColumns: "64mm 1fr",
-          minHeight: "297mm",
+          minHeight: fullPage ? "297mm" : 0,
         }}
       >
         <aside
@@ -1117,11 +1117,11 @@ function Template06({
 /* =========================================================
    MODELO 07 — EXECUTIVE GOLD
    ========================================================= */
-function Template07({ data, id }: { data: CvData; id?: string }) {
+function Template07({ data, id, fullPage = false }: { data: CvData; id?: string; fullPage?: boolean }) {
   const gold = "#B08A45";
   return (
     <BasePage id={id}>
-      <div style={{ display: "grid", gridTemplateColumns: "66mm 1fr", minHeight: "297mm" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "66mm 1fr", minHeight: fullPage ? "297mm" : 0 }}>
         <aside style={{ background: "#111111", color: "#FFFFFF", padding: "15mm 9mm" }}>
           <div style={{ display: "flex", justifyContent: "center" }}>
             <div style={{ border: "2px solid " + gold, borderRadius: "50%", padding: 3 }}><Photo src={data.photo} circle /></div>
@@ -1149,12 +1149,12 @@ function Template07({ data, id }: { data: CvData; id?: string }) {
 /* =========================================================
    MODELO 08 — WAVE BLUE
    ========================================================= */
-function Template08({ data, id }: { data: CvData; id?: string }) {
+function Template08({ data, id, fullPage = false }: { data: CvData; id?: string; fullPage?: boolean }) {
   const blue = "#315A7A";
   const cyan = "#55B5D8";
   return (
     <BasePage id={id}>
-      <div style={{ position: "relative", minHeight: "297mm", overflow: "hidden" }}>
+      <div style={{ position: "relative", minHeight: fullPage ? "297mm" : 0, overflow: "hidden" }}>
         <div style={{ height: "43mm", background: blue, borderBottomLeftRadius: "50% 22%", borderBottomRightRadius: "50% 22%", position: "absolute", top: 0, left: "-8%", right: "-8%" }}><div style={{ height: 3, background: cyan, position: "absolute", left: "7%", right: "7%", bottom: 2 }} /></div>
         <div style={{ position: "relative", padding: "20mm 13mm 25mm" }}>
           <div style={{ display: "grid", gridTemplateColumns: "62mm 1fr", gap: "10mm", alignItems: "center" }}>
@@ -1187,11 +1187,11 @@ function Template08({ data, id }: { data: CvData; id?: string }) {
 /* =========================================================
    MODELO 09 — BOLD START
    ========================================================= */
-function Template09({ data, id }: { data: CvData; id?: string }) {
+function Template09({ data, id, fullPage = false }: { data: CvData; id?: string; fullPage?: boolean }) {
   const gray = "#505050";
   return (
     <BasePage id={id}>
-      <div style={{ display: "grid", gridTemplateColumns: "74mm 1fr", minHeight: "297mm" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "74mm 1fr", minHeight: fullPage ? "297mm" : 0 }}>
         <aside style={{ background: gray, color: "#FFFFFF", padding: "12mm 10mm" }}>
           <Photo src={data.photo} />
           {data.summary && <div style={{ marginTop: 18 }}><Section title="Sobre mim" color="#FFFFFF"><div style={{ fontSize: 10.3, lineHeight: 1.65, whiteSpace: "pre-line" }}>{data.summary}</div></Section></div>}
@@ -1216,11 +1216,11 @@ function Template09({ data, id }: { data: CvData; id?: string }) {
 /* =========================================================
    MODELO 10 — CLASSIC PROFILE
    ========================================================= */
-function Template10({ data, id }: { data: CvData; id?: string }) {
+function Template10({ data, id, fullPage = false }: { data: CvData; id?: string; fullPage?: boolean }) {
   const side = "#D8D8D8";
   return (
     <BasePage id={id}>
-      <div style={{ display: "grid", gridTemplateColumns: "78mm 1fr", minHeight: "297mm" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "78mm 1fr", minHeight: fullPage ? "297mm" : 0 }}>
         <aside style={{ background: side, padding: "16mm 12mm" }}>
           <Photo src={data.photo} />
           <div style={{ height: 1, background: "#222222", margin: "18mm 0 9mm" }} />
@@ -1246,12 +1246,12 @@ function Template10({ data, id }: { data: CvData; id?: string }) {
 /* =========================================================
    MODELO 11 — SLATE CREATIVE
    ========================================================= */
-function Template11({ data, id }: { data: CvData; id?: string }) {
+function Template11({ data, id, fullPage = false }: { data: CvData; id?: string; fullPage?: boolean }) {
   const slate = "#61788A";
   const cream = "#F7E8D6";
   return (
     <BasePage id={id}>
-      <div style={{ display: "grid", gridTemplateColumns: "82mm 1fr", minHeight: "297mm", background: slate, color: "#FFFFFF" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "82mm 1fr", minHeight: fullPage ? "297mm" : 0, background: slate, color: "#FFFFFF" }}>
         <aside style={{ background: cream, color: slate, padding: "16mm 12mm" }}>
           <div style={{ display: "flex", justifyContent: "center" }}><Photo src={data.photo} circle /></div>
           <h1 style={{ margin: "17mm 0 6px", fontSize: 27, lineHeight: 1.05, textTransform: "uppercase", letterSpacing: 1 }}>{data.fullName || "O SEU NOME"}</h1>
@@ -1424,7 +1424,7 @@ export function CvThumb({
       <div
         style={{
           width: "210mm",
-          minHeight: "297mm",
+          minHeight: fullPage ? "297mm" : 0,
           transform: `scale(${width / 794})`,
           transformOrigin: "top left",
           pointerEvents: "none",
