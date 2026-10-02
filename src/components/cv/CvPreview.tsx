@@ -407,7 +407,7 @@ function Template01({
         style={{
           display: "grid",
           gridTemplateColumns: "63mm 1fr",
-          minHeight: "0",
+          minHeight: fullPage ? "297mm" : 0,
         }}
       >
         <aside
