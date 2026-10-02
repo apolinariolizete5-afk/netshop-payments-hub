@@ -29,6 +29,7 @@ import {
   EMPTY_CV,
   loadCv,
   previewData,
+  SAMPLE_CV,
   saveCv,
   type CvData,
 } from "@/lib/cv";
@@ -126,6 +127,8 @@ function CriarCvPage() {
     CV_TEMPLATES[0]!;
 
   const preview = previewData(data);
+  // A galeria usa dados demonstrativos próprios. Nunca mostra os dados já preenchidos pelo cliente.
+  const galleryPreview = previewData(SAMPLE_CV);
 
   function set<K extends keyof CvData>(key: K, value: CvData[K]) {
     setData((prev) => ({ ...prev, [key]: value }));
@@ -334,7 +337,7 @@ function CriarCvPage() {
                     chooseTemplate(CV_TEMPLATES[closest]!.id);
                   }
                 }}
-                className="no-scrollbar flex snap-x snap-mandatory gap-4 overflow-x-auto px-1 py-2 sm:px-10"
+                className="flex snap-x snap-mandatory gap-4 overflow-x-auto px-1 py-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:px-10"
               >
                 {CV_TEMPLATES.map((tpl) => {
                   const selected = tpl.id === data.templateId;
@@ -342,9 +345,9 @@ function CriarCvPage() {
                     <article
                       key={tpl.id}
                       className={[
-                        "group w-[78vw] max-w-[330px] shrink-0 snap-center rounded-3xl border bg-background p-2 transition sm:w-[31%]",
+                        "group w-[78vw] max-w-[330px] shrink-0 snap-center rounded-[26px] border bg-background p-2.5 transition duration-300 sm:w-[31%]",
                         selected
-                          ? "border-primary ring-2 ring-primary/20 shadow-lg"
+                          ? "border-primary bg-primary/[0.02] ring-2 ring-primary/20 shadow-xl sm:scale-[1.015]"
                           : "border-border hover:border-primary/40 hover:shadow-md",
                       ].join(" ")}
                     >
@@ -358,7 +361,7 @@ function CriarCvPage() {
                         aria-pressed={selected}
                       >
                         <div className="relative overflow-hidden rounded-2xl bg-muted">
-                          <CvThumb data={preview} template={tpl} width={330} />
+                          <CvThumb data={galleryPreview} template={tpl} width={330} />
                           {tpl.premium ? (
                             <span className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full bg-black/75 px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider text-white backdrop-blur">
                               <Crown className="h-3 w-3" />
@@ -388,6 +391,7 @@ function CriarCvPage() {
                         size="sm"
                         className="mx-2 mb-2 w-[calc(100%-1rem)] gap-1.5"
                         onClick={() => setZoomTemplate(tpl.id)}
+                        aria-label={`Ampliar ${tpl.name}`}
                       >
                         <Expand className="h-3.5 w-3.5" />
                         Ampliar
@@ -1264,7 +1268,7 @@ function TemplateZoom({
 
         <div className="min-h-0 flex-1 overflow-auto bg-muted/40 p-4 sm:p-8">
           <div className="mx-auto w-fit origin-top scale-[0.52] sm:scale-[0.7] md:scale-[0.82] lg:scale-100">
-            <CvPreview data={data} template={template} />
+            <CvPreview data={galleryPreview} template={template} />
           </div>
         </div>
 
