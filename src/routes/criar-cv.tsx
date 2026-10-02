@@ -38,6 +38,7 @@ import { parseCvFile } from "@/lib/cv.functions";
 import { useCvDownload } from "@/hooks/useCvDownload";
 
 export const Route = createFileRoute("/criar-cv")({
+  ssr: false,
   head: () => ({
     meta: [
       { title: "Criar CV profissional online | Moza Empregos" },
