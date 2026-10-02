@@ -1102,6 +1102,166 @@ function Template06({
   );
 }
 
+
+/* =========================================================
+   MODELO 07 — EXECUTIVE GOLD
+   ========================================================= */
+function Template07({ data, id }: { data: CvData; id?: string }) {
+  const gold = "#B08A45";
+  return (
+    <BasePage id={id}>
+      <div style={{ display: "grid", gridTemplateColumns: "66mm 1fr", minHeight: "297mm" }}>
+        <aside style={{ background: "#111111", color: "#FFFFFF", padding: "15mm 9mm" }}>
+          <div style={{ display: "flex", justifyContent: "center" }}>
+            <div style={{ border: "2px solid " + gold, borderRadius: "50%", padding: 3 }}><Photo src={data.photo} circle /></div>
+          </div>
+          <div style={{ marginTop: 22 }}>
+            <Section title="Contacto" color={gold}><Contact data={data} light /></Section>
+            <Section title="Competências principais" color={gold}><Skills data={data} light /></Section>
+            <Section title="Idiomas" color={gold}><Languages data={data} light /></Section>
+            <CustomSections data={data} accent={gold} />
+          </div>
+        </aside>
+        <main style={{ padding: "16mm 12mm" }}>
+          <h1 style={{ margin: 0, fontFamily: "Georgia, Times New Roman, serif", fontSize: 27, lineHeight: 1.05, color: gold, letterSpacing: 1 }}>{data.fullName || "O SEU NOME"}</h1>
+          <div style={{ marginTop: 7, fontSize: 10, letterSpacing: 2.2, textTransform: "uppercase", color: "#333333" }}>{data.title || "CONSULTOR ESTRATÉGICO | EXECUTIVO SÉNIOR"}</div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, margin: "15px 0 20px" }}><div style={{ height: 1, background: gold }} /><div style={{ height: 1, background: gold }} /></div>
+          {data.summary && <Section title="Perfil Executivo" color={gold}><div style={{ fontSize: 10.2, lineHeight: 1.65, whiteSpace: "pre-line" }}>{data.summary}</div></Section>}
+          <Section title="Principais resultados" color={gold}><Experience data={data} accent={gold} /></Section>
+          <Section title="Formação Académica" color={gold}><Education data={data} accent={gold} /></Section>
+        </main>
+      </div>
+    </BasePage>
+  );
+}
+
+/* =========================================================
+   MODELO 08 — WAVE BLUE
+   ========================================================= */
+function Template08({ data, id }: { data: CvData; id?: string }) {
+  const blue = "#315A7A";
+  const cyan = "#55B5D8";
+  return (
+    <BasePage id={id}>
+      <div style={{ position: "relative", minHeight: "297mm", overflow: "hidden" }}>
+        <div style={{ height: "43mm", background: blue, borderBottomLeftRadius: "50% 22%", borderBottomRightRadius: "50% 22%", position: "absolute", top: 0, left: "-8%", right: "-8%" }}><div style={{ height: 3, background: cyan, position: "absolute", left: "7%", right: "7%", bottom: 2 }} /></div>
+        <div style={{ position: "relative", padding: "20mm 13mm 25mm" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "62mm 1fr", gap: "10mm", alignItems: "center" }}>
+            <div style={{ display: "flex", justifyContent: "center", paddingTop: "8mm" }}><div style={{ border: "5px solid " + blue, borderRadius: "50%", padding: 3, background: "#FFFFFF" }}><Photo src={data.photo} circle /></div></div>
+            <div style={{ paddingTop: "7mm" }}>
+              <h1 style={{ margin: 0, fontSize: 27, lineHeight: 1, color: blue, fontWeight: 800, letterSpacing: .4 }}>{data.fullName || "O SEU NOME"}</h1>
+              <div style={{ marginTop: 7, color: cyan, fontSize: 11, fontWeight: 700, letterSpacing: 3, textTransform: "uppercase" }}>{data.title || "ENGENHEIRO DE SOFTWARE"}</div>
+              <div style={{ marginTop: 12 }}><Contact data={data} /></div>
+            </div>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "62mm 1fr", gap: "10mm", marginTop: "15mm" }}>
+            <aside style={{ background: "#EEF1F4", borderRadius: "0 28px 28px 0", padding: "10mm 8mm" }}>
+              <Section title="Habilidades" color={blue}><Skills data={data} /></Section>
+              <Section title="Idiomas" color={blue}><Languages data={data} /></Section>
+              <CustomSections data={data} accent={blue} />
+            </aside>
+            <main>
+              {data.summary && <Section title="Perfil Profissional" color={blue}><div style={{ fontSize: 10.2, lineHeight: 1.65, whiteSpace: "pre-line" }}>{data.summary}</div></Section>}
+              <Section title="Experiência Profissional" color={blue}><Experience data={data} accent={blue} /></Section>
+              <Section title="Formação Académica" color={blue}><Education data={data} accent={blue} /></Section>
+            </main>
+          </div>
+        </div>
+        <div style={{ height: "27mm", background: blue, borderTopLeftRadius: "50% 28%", borderTopRightRadius: "50% 28%", position: "absolute", bottom: "-8mm", left: "-8%", right: "-8%" }}><div style={{ height: 3, background: cyan, position: "absolute", left: "7%", right: "7%", top: 2 }} /></div>
+      </div>
+    </BasePage>
+  );
+}
+
+/* =========================================================
+   MODELO 09 — BOLD START
+   ========================================================= */
+function Template09({ data, id }: { data: CvData; id?: string }) {
+  const gray = "#505050";
+  return (
+    <BasePage id={id}>
+      <div style={{ display: "grid", gridTemplateColumns: "74mm 1fr", minHeight: "297mm" }}>
+        <aside style={{ background: gray, color: "#FFFFFF", padding: "12mm 10mm" }}>
+          <Photo src={data.photo} />
+          {data.summary && <div style={{ marginTop: 18 }}><Section title="Sobre mim" color="#FFFFFF"><div style={{ fontSize: 10.3, lineHeight: 1.65, whiteSpace: "pre-line" }}>{data.summary}</div></Section></div>}
+          <Section title="Interesses pessoais" color="#FFFFFF"><Skills data={{ ...data, skills: data.skills || "Desenvolvimento profissional, Inovação e tecnologia, Trabalho em equipa e colaboração" }} light /></Section>
+          <Section title="Idiomas" color="#FFFFFF"><Languages data={data} light /></Section>
+          <Section title="Contacto" color="#FFFFFF"><Contact data={data} light /></Section>
+        </aside>
+        <main style={{ padding: "16mm 11mm" }}>
+          <h1 style={{ margin: 0, fontFamily: "Arial Narrow, Impact, sans-serif", fontSize: 34, lineHeight: .98, letterSpacing: -.5, textTransform: "uppercase", color: "#333333" }}>{data.fullName || "O SEU NOME"}</h1>
+          <div style={{ marginTop: 10, fontSize: 13, color: "#555555" }}>{data.title || "Estagiário Administrativo"}</div>
+          <div style={{ width: 55, height: 3, background: gray, margin: "16px 0 22px" }} />
+          <Section title="Formação Académica" color={gray}><Education data={data} accent={gray} /></Section>
+          <Section title="Experiência Profissional" color={gray}><Experience data={data} accent={gray} /></Section>
+          <Section title="Habilidades" color={gray}><Skills data={data} /></Section>
+          <CustomSections data={data} accent={gray} />
+        </main>
+      </div>
+    </BasePage>
+  );
+}
+
+/* =========================================================
+   MODELO 10 — CLASSIC PROFILE
+   ========================================================= */
+function Template10({ data, id }: { data: CvData; id?: string }) {
+  const side = "#D8D8D8";
+  return (
+    <BasePage id={id}>
+      <div style={{ display: "grid", gridTemplateColumns: "78mm 1fr", minHeight: "297mm" }}>
+        <aside style={{ background: side, padding: "16mm 12mm" }}>
+          <Photo src={data.photo} />
+          <div style={{ height: 1, background: "#222222", margin: "18mm 0 9mm" }} />
+          <Section title="Sobre mim"><div style={{ fontFamily: "Georgia, Times New Roman, serif", fontSize: 10.2, lineHeight: 1.75, whiteSpace: "pre-line" }}>{data.summary || "Apresente aqui um resumo profissional curto e objetivo."}</div></Section>
+          <Section title="Contacto"><Contact data={data} /></Section>
+          <Section title="Competências"><Skills data={data} /></Section>
+          <Section title="Idiomas"><Languages data={data} /></Section>
+        </aside>
+        <main style={{ padding: "18mm 11mm" }}>
+          <h1 style={{ margin: 0, fontFamily: "Georgia, Times New Roman, serif", fontSize: 27, lineHeight: 1.05, letterSpacing: 1.2, textTransform: "uppercase" }}>{data.fullName || "O SEU NOME"}</h1>
+          <div style={{ marginTop: 8, fontFamily: "Georgia, Times New Roman, serif", fontSize: 13, fontStyle: "italic", color: "#555555" }}>{data.title || "Estudante"}</div>
+          <div style={{ marginTop: 24 }}>
+            <Section title="Experiência de Trabalho"><Experience data={data} /></Section>
+            <Section title="Estudos"><Education data={data} /></Section>
+            <CustomSections data={data} />
+          </div>
+        </main>
+      </div>
+    </BasePage>
+  );
+}
+
+/* =========================================================
+   MODELO 11 — SLATE CREATIVE
+   ========================================================= */
+function Template11({ data, id }: { data: CvData; id?: string }) {
+  const slate = "#61788A";
+  const cream = "#F7E8D6";
+  return (
+    <BasePage id={id}>
+      <div style={{ display: "grid", gridTemplateColumns: "82mm 1fr", minHeight: "297mm", background: slate, color: "#FFFFFF" }}>
+        <aside style={{ background: cream, color: slate, padding: "16mm 12mm" }}>
+          <div style={{ display: "flex", justifyContent: "center" }}><Photo src={data.photo} circle /></div>
+          <h1 style={{ margin: "17mm 0 6px", fontSize: 27, lineHeight: 1.05, textTransform: "uppercase", letterSpacing: 1 }}>{data.fullName || "O SEU NOME"}</h1>
+          <div style={{ fontSize: 10.5, letterSpacing: 2, textTransform: "uppercase", color: "#778C9C" }}>{data.title || "PROFISSIONAL"}</div>
+          <div style={{ width: 42, height: 3, background: slate, margin: "16px 0 20px" }} />
+          {data.summary && <Section title="Perfil" color={slate}><div style={{ fontSize: 10.1, lineHeight: 1.65, whiteSpace: "pre-line" }}>{data.summary}</div></Section>}
+          <Section title="Contacto" color={slate}><Contact data={data} /></Section>
+          <Section title="Competências" color={slate}><Skills data={data} /></Section>
+        </aside>
+        <main style={{ padding: "15mm 12mm", background: slate }}>
+          <div style={{ marginBottom: 18 }}><Contact data={data} light /></div>
+          <Section title="Experiência Profissional" color={cream}><div style={{ background: cream, color: slate, padding: "7px 11px", fontSize: 11, fontWeight: 800, letterSpacing: 1.2, textTransform: "uppercase", marginBottom: 13 }}>Experiência profissional</div><Experience data={data} light accent={cream} /></Section>
+          <Section title="Formação Académica" color={cream}><div style={{ background: cream, color: slate, padding: "7px 11px", fontSize: 11, fontWeight: 800, letterSpacing: 1.2, textTransform: "uppercase", marginBottom: 13 }}>Percurso académico</div><Education data={data} light accent={cream} /></Section>
+          <Section title="Interesses principais" color={cream}><div style={{ background: cream, color: slate, padding: "7px 11px", fontSize: 11, fontWeight: 800, letterSpacing: 1.2, textTransform: "uppercase", marginBottom: 13 }}>Interesses principais</div><Skills data={{ ...data, skills: data.skills || "Jornalismo, Tecnologia, Arte, Música, História, Arquitetura" }} light /></Section>
+          <CustomSections data={data} accent={cream} />
+        </main>
+      </div>
+    </BasePage>
+  );
+}
+
 /* =========================================================
    COMPONENTE PRINCIPAL
    ========================================================= */
@@ -1159,6 +1319,21 @@ export function CvPreview({
           id={id}
         />
       );
+
+    case "template-07":
+      return <Template07 data={data} id={id} />;
+
+    case "template-08":
+      return <Template08 data={data} id={id} />;
+
+    case "template-09":
+      return <Template09 data={data} id={id} />;
+
+    case "template-10":
+      return <Template10 data={data} id={id} />;
+
+    case "template-11":
+      return <Template11 data={data} id={id} />;
 
     default:
       return (
