@@ -539,12 +539,14 @@ function Template01({
 function Template02({
   data,
   id,
+  fullPage = false,
 }: {
   data: CvData;
   id?: string;
+  fullPage?: boolean;
 }) {
   return (
-    <BasePage id={id}>
+    <BasePage id={id} fullPage={fullPage}>
       <div style={{ padding: "15mm" }}>
         <header
           style={{
@@ -648,12 +650,14 @@ function Template02({
 function Template03({
   data,
   id,
+  fullPage = false,
 }: {
   data: CvData;
   id?: string;
+  fullPage?: boolean;
 }) {
   return (
-    <BasePage id={id}>
+    <BasePage id={id} fullPage={fullPage}>
       <div
         style={{
           padding: "18mm",
@@ -758,12 +762,14 @@ function Template03({
 function Template04({
   data,
   id,
+  fullPage = false,
 }: {
   data: CvData;
   id?: string;
+  fullPage?: boolean;
 }) {
   return (
-    <BasePage id={id}>
+    <BasePage id={id} fullPage={fullPage}>
       <div style={{ padding: "15mm" }}>
         <header
           style={{
@@ -896,7 +902,7 @@ function Template05({
   fullPage?: boolean;
 }) {
   return (
-    <BasePage id={id}>
+    <BasePage id={id} fullPage={fullPage}>
       <div
         style={{
           display: "grid",
@@ -1012,14 +1018,16 @@ function Template05({
 function Template06({
   data,
   id,
+  fullPage = false,
 }: {
   data: CvData;
   id?: string;
+  fullPage?: boolean;
 }) {
   const accent = "#4F46E5";
 
   return (
-    <BasePage id={id}>
+    <BasePage id={id} fullPage={fullPage}>
       <div style={{ padding: "15mm 16mm" }}>
         <header
           style={{
@@ -1277,6 +1285,102 @@ function Template11({ data, id, fullPage = false }: { data: CvData; id?: string;
 }
 
 /* =========================================================
+   MODELO 12 — FINANCE
+   ========================================================= */
+function Template12({ data, id, fullPage = false }: { data: CvData; id?: string; fullPage?: boolean }) {
+  const navy = "#172033", gold = "#B08A45";
+  return <BasePage id={id} fullPage={fullPage}>
+    <div style={{ padding: "13mm 14mm", fontFamily: "Arial, Helvetica, sans-serif" }}>
+      <header style={{ display: "grid", gridTemplateColumns: "1fr 46mm", gap: 12 }}>
+        <div style={{ background: navy, color: "#FFFFFF", padding: "12mm 11mm" }}>
+          <div style={{ color: "#D9B56B", fontSize: 8.5, fontWeight: 800, letterSpacing: 2.2, textTransform: "uppercase" }}>Curriculum Vitae</div>
+          <h1 style={{ margin: "8px 0 4px", fontSize: 25, lineHeight: 1.05 }}>{data.fullName || "O SEU NOME"}</h1>
+          <div style={{ color: "#D9DEE7", fontSize: 10.5 }}>{data.title || "PROFISSIONAL"}</div>
+        </div>
+        <div style={{ border: "2px solid #B08A45", padding: 10, display: "flex", alignItems: "center", justifyContent: "center" }}><Photo src={data.photo} square /></div>
+      </header>
+      <div style={{ display: "grid", gridTemplateColumns: "48mm 1fr", gap: 14, marginTop: 14 }}>
+        <aside style={{ borderRight: "1px solid #B08A45", paddingRight: 10 }}>
+          <Section title="Contacto" color={navy}><Contact data={data} /></Section>
+          <Section title="Competências" color={navy}><Skills data={data} /></Section>
+          <Section title="Idiomas" color={navy}><Languages data={data} /></Section>
+        </aside>
+        <main>{data.summary && <Section title="Perfil" color={navy}><div style={{ fontSize: 10.1, lineHeight: 1.62, whiteSpace: "pre-line" }}>{data.summary}</div></Section>}
+          <Section title="Experiência Profissional" color={navy}><Experience data={data} accent={gold} /></Section>
+          <Section title="Formação Académica" color={navy}><Education data={data} accent={gold} /></Section>
+          <CustomSections data={data} accent={gold} />
+        </main>
+      </div>
+    </div>
+  </BasePage>;
+}
+
+/* =========================================================
+   MODELO 13 — DEVELOPMENT
+   ========================================================= */
+function Template13({ data, id, fullPage = false }: { data: CvData; id?: string; fullPage?: boolean }) {
+  const green = "#2F6B57", mint = "#EAF3EE";
+  return <BasePage id={id} fullPage={fullPage}>
+    <div style={{ minHeight: fullPage ? "297mm" : 0, fontFamily: "Arial, Helvetica, sans-serif" }}>
+      <div style={{ height: 8, background: green }} />
+      <header style={{ padding: "15mm 17mm 10mm", display: "grid", gridTemplateColumns: "1fr 35mm", gap: 16, alignItems: "center", background: mint }}>
+        <div><div style={{ color: green, fontSize: 8.5, fontWeight: 800, letterSpacing: 2, textTransform: "uppercase" }}>Perfil profissional</div>
+          <h1 style={{ margin: "6px 0", fontSize: 27, lineHeight: 1.05 }}>{data.fullName || "O SEU NOME"}</h1>
+          <div style={{ color: green, fontSize: 11, fontWeight: 700 }}>{data.title || "PROFISSIONAL"}</div>
+        </div><Photo src={data.photo} circle />
+      </header>
+      <div style={{ display: "grid", gridTemplateColumns: "56mm 1fr", gap: 16, padding: "10mm 17mm 15mm" }}>
+        <aside><Section title="Contacto" color={green}><Contact data={data} /></Section><Section title="Competências" color={green}><Skills data={data} /></Section><Section title="Idiomas" color={green}><Languages data={data} /></Section></aside>
+        <main>{data.summary && <Section title="Resumo" color={green}><div style={{ fontSize: 10.1, lineHeight: 1.65, whiteSpace: "pre-line" }}>{data.summary}</div></Section>}
+          <Section title="Experiência" color={green}><Experience data={data} accent={green} /></Section><Section title="Formação" color={green}><Education data={data} accent={green} /></Section><CustomSections data={data} accent={green} />
+        </main>
+      </div>
+    </div>
+  </BasePage>;
+}
+
+/* =========================================================
+   MODELO 14 — ATS
+   ========================================================= */
+function Template14({ data, id, fullPage = false }: { data: CvData; id?: string; fullPage?: boolean }) {
+  return <BasePage id={id} fullPage={fullPage}>
+    <div style={{ padding: "16mm 18mm", fontFamily: "Arial, Helvetica, sans-serif" }}>
+      <header style={{ borderBottom: "2px solid #111827", paddingBottom: 9 }}>
+        <h1 style={{ margin: 0, fontSize: 27, lineHeight: 1.05 }}>{data.fullName || "O SEU NOME"}</h1>
+        <div style={{ marginTop: 5, fontSize: 11, fontWeight: 700 }}>{data.title || "PROFISSIONAL"}</div>
+        <div style={{ marginTop: 8, fontSize: 8.8, color: "#4B5563" }}>{[data.email, data.phone, data.location].filter(Boolean).join("  •  ") || "Email  •  Telefone  •  Localização"}</div>
+      </header>
+      <main style={{ paddingTop: 12 }}>{data.summary && <Section title="RESUMO PROFISSIONAL"><div style={{ fontSize: 10.1, lineHeight: 1.62, whiteSpace: "pre-line" }}>{data.summary}</div></Section>}
+        <Section title="EXPERIÊNCIA PROFISSIONAL"><Experience data={data} /></Section><Section title="FORMAÇÃO ACADÉMICA"><Education data={data} /></Section><Section title="COMPETÊNCIAS"><Skills data={data} /></Section><Section title="IDIOMAS"><Languages data={data} /></Section><CustomSections data={data} accent="#111827" />
+      </main>
+    </div>
+  </BasePage>;
+}
+
+/* =========================================================
+   MODELO 15 — MOZAMBIQUE
+   ========================================================= */
+function Template15({ data, id, fullPage = false }: { data: CvData; id?: string; fullPage?: boolean }) {
+  const green = "#006B4F", red = "#B52B2B";
+  return <BasePage id={id} fullPage={fullPage}>
+    <div style={{ minHeight: fullPage ? "297mm" : 0, fontFamily: "Arial, Helvetica, sans-serif" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "7mm 1fr" }}>
+        <div style={{ background: "linear-gradient(#006B4F 0 42%, #C99A2E 42% 58%, #B52B2B 58% 100%)" }} />
+        <div><header style={{ padding: "14mm 14mm 9mm", borderBottom: "1px solid #D1D5DB" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 13 }}><Photo src={data.photo} circle /><div><h1 style={{ margin: 0, fontSize: 25, lineHeight: 1.05 }}>{data.fullName || "O SEU NOME"}</h1><div style={{ marginTop: 5, color: green, fontSize: 10.5, fontWeight: 800, textTransform: "uppercase", letterSpacing: 1.2 }}>{data.title || "PROFISSIONAL"}</div></div></div>
+        </header>
+        <div style={{ display: "grid", gridTemplateColumns: "51mm 1fr", gap: 14, padding: "10mm 14mm 15mm" }}>
+          <aside><Section title="Contacto" color={green}><Contact data={data} /></Section><Section title="Competências" color={green}><Skills data={data} /></Section><Section title="Idiomas" color={green}><Languages data={data} /></Section></aside>
+          <main>{data.summary && <Section title="Perfil" color={green}><div style={{ fontSize: 10.1, lineHeight: 1.65, whiteSpace: "pre-line" }}>{data.summary}</div></Section>}
+            <Section title="Experiência Profissional" color={green}><Experience data={data} accent={green} /></Section><Section title="Formação Académica" color={green}><Education data={data} accent={green} /></Section><CustomSections data={data} accent={red} />
+          </main>
+        </div></div>
+      </div>
+    </div>
+  </BasePage>;
+}
+
+/* =========================================================
    COMPONENTE PRINCIPAL
    ========================================================= */
 
@@ -1355,6 +1459,14 @@ export function CvPreview({
 
     case "template-11":
       return <Template11 data={data} id={id} fullPage={fullPage} />;
+    case "template-12":
+      return <Template12 data={data} id={id} fullPage={fullPage} />;
+    case "template-13":
+      return <Template13 data={data} id={id} fullPage={fullPage} />;
+    case "template-14":
+      return <Template14 data={data} id={id} fullPage={fullPage} />;
+    case "template-15":
+      return <Template15 data={data} id={id} fullPage={fullPage} />;
 
     default:
       return (
