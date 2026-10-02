@@ -1427,7 +1427,7 @@ export function CvThumb({
       <div
         style={{
           width: "210mm",
-          minHeight: fullPage ? "297mm" : 0,
+          minHeight: "297mm",
           transform: `scale(${width / 794})`,
           transformOrigin: "top left",
           pointerEvents: "none",
