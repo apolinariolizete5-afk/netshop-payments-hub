@@ -139,7 +139,7 @@ export const SAMPLE_CV: CvData = {
   skills:
     "Gestão de operações, Liderança, Excel, Gestão administrativa, Comunicação, Planeamento",
   languages: "Português — Nativo, Inglês — Intermédio",
-  templateId: "editorial",
+  templateId: "template-01",
 };
 
 /*
