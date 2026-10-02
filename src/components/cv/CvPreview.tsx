@@ -5,6 +5,7 @@ type Props = {
   data: CvData;
   template: CvTemplate;
   id?: string;
+  fullPage?: boolean;
 };
 
 const GOLD = "#A58C62";
@@ -15,7 +16,7 @@ const CREAM = "#EEEAE3";
 
 const PAGE: CSSProperties = {
   width: "210mm",
-  minHeight: "297mm",
+  height: "auto",
   background: "#FFFFFF",
   color: "#222222",
   boxSizing: "border-box",
@@ -336,12 +337,21 @@ function Education({
 function BasePage({
   id,
   children,
+  fullPage = false,
 }: {
   id?: string;
   children: ReactNode;
+  fullPage?: boolean;
 }) {
   return (
-    <div id={id} style={PAGE}>
+    <div
+      id={id}
+      style={{
+        ...PAGE,
+        minHeight: fullPage ? "297mm" : undefined,
+      }}
+      data-cv-page={fullPage ? "full" : "content"}
+    >
       {children}
     </div>
   );
@@ -389,14 +399,15 @@ function Template01({
 }: {
   data: CvData;
   id?: string;
+  fullPage?: boolean;
 }) {
   return (
-    <BasePage id={id}>
+    <BasePage id={id} fullPage={fullPage}>
       <div
         style={{
           display: "grid",
           gridTemplateColumns: "63mm 1fr",
-          minHeight: "297mm",
+          minHeight: "0",
         }}
       >
         <aside
@@ -1270,6 +1281,7 @@ export function CvPreview({
   data,
   template,
   id,
+  fullPage = false,
 }: Props) {
   switch (template.id) {
     case "template-01":
@@ -1277,6 +1289,7 @@ export function CvPreview({
         <Template01
           data={data}
           id={id}
+          fullPage={fullPage}
         />
       );
 
@@ -1285,6 +1298,7 @@ export function CvPreview({
         <Template02
           data={data}
           id={id}
+          fullPage={fullPage}
         />
       );
 
@@ -1293,6 +1307,7 @@ export function CvPreview({
         <Template03
           data={data}
           id={id}
+          fullPage={fullPage}
         />
       );
 
@@ -1301,6 +1316,7 @@ export function CvPreview({
         <Template04
           data={data}
           id={id}
+          fullPage={fullPage}
         />
       );
 
@@ -1309,6 +1325,7 @@ export function CvPreview({
         <Template05
           data={data}
           id={id}
+          fullPage={fullPage}
         />
       );
 
@@ -1317,29 +1334,31 @@ export function CvPreview({
         <Template06
           data={data}
           id={id}
+          fullPage={fullPage}
         />
       );
 
     case "template-07":
-      return <Template07 data={data} id={id} />;
+      return <Template07 data={data} id={id} fullPage={fullPage} />;
 
     case "template-08":
-      return <Template08 data={data} id={id} />;
+      return <Template08 data={data} id={id} fullPage={fullPage} />;
 
     case "template-09":
-      return <Template09 data={data} id={id} />;
+      return <Template09 data={data} id={id} fullPage={fullPage} />;
 
     case "template-10":
-      return <Template10 data={data} id={id} />;
+      return <Template10 data={data} id={id} fullPage={fullPage} />;
 
     case "template-11":
-      return <Template11 data={data} id={id} />;
+      return <Template11 data={data} id={id} fullPage={fullPage} />;
 
     default:
       return (
         <Template01
           data={data}
           id={id}
+          fullPage={fullPage}
         />
       );
   }
@@ -1414,6 +1433,7 @@ export function CvThumb({
         <CvPreview
           data={preview}
           template={template}
+          fullPage
         />
       </div>
     </div>
