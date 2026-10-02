@@ -234,6 +234,7 @@ export const CV_TEMPLATES: CvTemplate[] = [
     photoShape: "circle",
     font: "sans",
     premium: true,
+  },
   {
     id: "template-07",
     name: "Executive Gold",
@@ -289,8 +290,8 @@ export const CV_TEMPLATES: CvTemplate[] = [
     font: "sans",
     premium: true,
   },
-  },
 ];
+
 export const CV_STORAGE_KEY = "moza-cv-draft";
 
 export function loadCv(): CvData {
