@@ -279,20 +279,16 @@ if (!selectedMethod) {
   const recheck = useCallback(async () => {
     if (actionLock.current) return;
     actionLock.current = true;
-    try {
-    if (!user) {
-      setMessage(
-        "Inicie sessão para verificar o pagamento.",
-      );
-      return;
-    }
-
     setBusy(true);
     setMessage("");
 
     try {
-      const r = await access();
+      if (!user) {
+        setMessage("Inicie sessão para verificar o pagamento.");
+        return;
+      }
 
+      const r = await access();
       setPaid(r.paid);
 
       if (!r.paid) {
@@ -301,16 +297,10 @@ if (!selectedMethod) {
         );
       }
     } catch {
-      setMessage(
-        "Não foi possível verificar o pagamento.",
-      );
+      setMessage("Não foi possível verificar o pagamento.");
     } finally {
       setBusy(false);
       actionLock.current = false;
-    }
-    } catch {
-      actionLock.current = false;
-      setMessage("Não foi possível verificar o pagamento.");
     }
   }, [user, access]);
 
