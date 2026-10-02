@@ -1,13 +1,15 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import {
   Check,
+  ChevronLeft,
+  ChevronRight,
   Crown,
   Download,
+  Expand,
   Loader2,
   Plus,
-  Search,
   Sparkles,
   Trash2,
   Upload,
@@ -37,31 +39,20 @@ import { useCvDownload } from "@/hooks/useCvDownload";
 export const Route = createFileRoute("/criar-cv")({
   head: () => ({
     meta: [
-      {
-        title: "Criar CV profissional online | Moza Empregos",
-      },
+      { title: "Criar CV profissional online | Moza Empregos" },
       {
         name: "description",
         content:
-          "Crie o seu CV profissional em minutos com modelos premium, fotografia, preenchimento automático por IA e exportação em PDF.",
+          "Escolha um modelo, responda a perguntas simples e crie o seu CV profissional em poucos minutos.",
       },
-      {
-        property: "og:title",
-        content: "Criador de CV | Moza Empregos",
-      },
+      { property: "og:title", content: "Criador de CV | Moza Empregos" },
       {
         property: "og:description",
         content:
-          "Modelos profissionais A4 com fotografia, IA e exportação em PDF.",
+          "Escolha um modelo profissional e crie o seu CV de forma simples.",
       },
-      {
-        property: "og:type",
-        content: "website",
-      },
-      {
-        name: "twitter:card",
-        content: "summary_large_image",
-      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: CriarCvPage,
@@ -69,22 +60,13 @@ export const Route = createFileRoute("/criar-cv")({
 
 const STEPS = [
   "Modelo",
-  "Dados",
+  "Informações",
   "Experiência",
   "Formação",
-  "Competências",
+  "Finalizar",
 ] as const;
 
-const TEMPLATE_FILTERS = [
-  "Todos",
-  "Premium",
-] as const;
-
-type TemplateFilter = (typeof TEMPLATE_FILTERS)[number];
-
-function templateCategory(
-  templateId: string,
-): string {
+function templateCategory(templateId: string) {
   const categories: Record<string, string> = {
     "template-01": "Elegante",
     "template-02": "Executivo",
@@ -97,21 +79,6 @@ function templateCategory(
     "template-09": "Primeiro emprego",
     "template-10": "Académico",
     "template-11": "Criativo",
-    editorial: "Elegante",
-    executive: "Executivo",
-    corporate: "Corporativo",
-    swiss: "Design",
-    minimal: "Minimalista",
-    timeline: "Carreira",
-    creative: "Criativo",
-    academic: "Académico",
-    tech: "Tecnologia",
-    portfolio: "Criativo",
-    "first-job": "Primeiro emprego",
-    finance: "Finanças",
-    development: "ONG / Desenvolvimento",
-    ats: "ATS / Recrutamento",
-    mozambique: "Moçambique",
   };
 
   return categories[templateId] ?? "Profissional";
@@ -120,33 +87,67 @@ function templateCategory(
 function CriarCvPage() {
   const [data, setData] = useState<CvData>(EMPTY_CV);
   const [step, setStep] = useState(0);
-
+  const [galleryIndex, setGalleryIndex] = useState(0);
+  const [zoomTemplate, setZoomTemplate] = useState<string | null>(null);
   const [paymentOpen, setPaymentOpen] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<"mpesa" | "mkesh">("mpesa");
   const [paymentPhone, setPaymentPhone] = useState("");
+  const [mobilePreviewOpen, setMobilePreviewOpen] = useState(false);
 
-  const [aiState, setAiState] = useState<{
-    loading: boolean;
-    message: string;
-  }>({
+  const [aiState, setAiState] = useState({
     loading: false,
     message: "",
   });
 
-  const [templateFilter, setTemplateFilter] =
-    useState<TemplateFilter>("Todos");
-
-  const [templateSearch, setTemplateSearch] =
-    useState("");
-
-  const photoInput =
-    useRef<HTMLInputElement>(null);
-
-  const cvInput =
-    useRef<HTMLInputElement>(null);
+  const photoInput = useRef<HTMLInputElement>(null);
+  const cvInput = useRef<HTMLInputElement>(null);
+  const galleryRef = useRef<HTMLDivElement>(null);
 
   const parse = useServerFn(parseCvFile);
   const pdf = useCvDownload();
+
+  useEffect(() => {
+    setData(loadCv());
+  }, []);
+
+  useEffect(() => {
+    saveCv(data);
+  }, [data]);
+
+  useEffect(() => {
+    const selectedIndex = CV_TEMPLATES.findIndex(
+      (item) => item.id === data.templateId,
+    );
+    if (selectedIndex >= 0) setGalleryIndex(selectedIndex);
+  }, [data.templateId]);
+
+  const template =
+    CV_TEMPLATES.find((item) => item.id === data.templateId) ??
+    CV_TEMPLATES[0]!;
+
+  const preview = previewData(data);
+
+  function set<K extends keyof CvData>(key: K, value: CvData[K]) {
+    setData((prev) => ({ ...prev, [key]: value }));
+  }
+
+  function chooseTemplate(id: string) {
+    set("templateId", id);
+  }
+
+  function scrollGallery(direction: number) {
+    const next = Math.min(
+      Math.max(galleryIndex + direction, 0),
+      CV_TEMPLATES.length - 1,
+    );
+    setGalleryIndex(next);
+    chooseTemplate(CV_TEMPLATES[next]!.id);
+    galleryRef.current?.children[next]?.scrollIntoView({
+      behavior: "smooth",
+      block: "nearest",
+      inline: "center",
+    });
+  }
 
   function openPayment() {
     if (pdf.paid) {
@@ -158,73 +159,21 @@ function CriarCvPage() {
     setPaymentOpen(true);
   }
 
-  useEffect(() => {
-    setData(loadCv());
-  }, []);
-
-  useEffect(() => {
-    saveCv(data);
-  }, [data]);
-
-  const set = <K extends keyof CvData>(
-    key: K,
-    value: CvData[K],
-  ) =>
-    setData((prev) => ({
-      ...prev,
-      [key]: value,
-    }));
-
-  const template =
-    CV_TEMPLATES.find(
-      (t) => t.id === data.templateId,
-    ) ?? CV_TEMPLATES[0]!;
-
-  const preview = previewData(data);
-
-  const visibleTemplates =
-    CV_TEMPLATES.filter((tpl) => {
-      const matchesFilter =
-        templateFilter === "Todos" ||
-        (templateFilter === "Premium" &&
-          tpl.premium);
-      const search =
-        templateSearch.trim().toLowerCase();
-
-      const matchesSearch =
-        !search ||
-        tpl.name.toLowerCase().includes(search) ||
-        tpl.description
-          .toLowerCase()
-          .includes(search) ||
-        templateCategory(tpl.id)
-          .toLowerCase()
-          .includes(search);
-
-      return matchesFilter && matchesSearch;
-    });
-
   async function onPhoto(file: File) {
-    const dataUrl = await toDataUrl(file);
-    set("photo", dataUrl);
+    set("photo", await toDataUrl(file));
   }
 
   async function onCvFile(file: File) {
-    setAiState({
-      loading: true,
-      message: "A ler o seu CV...",
-    });
+    setAiState({ loading: true, message: "A ler o seu CV..." });
 
     try {
       const dataUrl = await toDataUrl(file);
-      const base64 =
-        dataUrl.split(",")[1] ?? "";
+      const base64 = dataUrl.split(",")[1] ?? "";
 
       const result = (await parse({
         data: {
           base64,
-          mimeType:
-            file.type || "application/pdf",
+          mimeType: file.type || "application/pdf",
           fileName: file.name,
         },
       })) as
@@ -232,68 +181,33 @@ function CriarCvPage() {
         | { ok: false; error: string };
 
       if (!result.ok) {
-        setAiState({
-          loading: false,
-          message: result.error,
-        });
+        setAiState({ loading: false, message: result.error });
         return;
       }
 
-      const cv = JSON.parse(
-        result.cvJson,
-      ) as Partial<CvData>;
+      const cv = JSON.parse(result.cvJson) as Partial<CvData>;
 
       setData((prev) => ({
         ...prev,
-
-        fullName:
-          str(cv.fullName) ||
-          prev.fullName,
-
-        title:
-          str(cv.title) ||
-          prev.title,
-
-        email:
-          str(cv.email) ||
-          prev.email,
-
-        phone:
-          str(cv.phone) ||
-          prev.phone,
-
-        location:
-          str(cv.location) ||
-          prev.location,
-
-        summary:
-          str(cv.summary) ||
-          prev.summary,
-
-        skills:
-          str(cv.skills) ||
-          prev.skills,
-
-        languages:
-          str(cv.languages) ||
-          prev.languages,
-
+        fullName: str(cv.fullName) || prev.fullName,
+        title: str(cv.title) || prev.title,
+        email: str(cv.email) || prev.email,
+        phone: str(cv.phone) || prev.phone,
+        location: str(cv.location) || prev.location,
+        summary: str(cv.summary) || prev.summary,
+        skills: str(cv.skills) || prev.skills,
+        languages: str(cv.languages) || prev.languages,
         experiences:
-          Array.isArray(cv.experiences) &&
-          cv.experiences.length
+          Array.isArray(cv.experiences) && cv.experiences.length
             ? cv.experiences.map((e) => ({
                 role: str(e?.role),
                 company: str(e?.company),
                 period: str(e?.period),
-                description: str(
-                  e?.description,
-                ),
+                description: str(e?.description),
               }))
             : prev.experiences,
-
         education:
-          Array.isArray(cv.education) &&
-          cv.education.length
+          Array.isArray(cv.education) && cv.education.length
             ? cv.education.map((e) => ({
                 course: str(e?.course),
                 school: str(e?.school),
@@ -304,1182 +218,1165 @@ function CriarCvPage() {
 
       setAiState({
         loading: false,
-        message:
-          "Formulários preenchidos. Reveja e ajuste o que precisar.",
+        message: "Preenchimento concluído. Reveja os dados antes de continuar.",
       });
     } catch {
       setAiState({
         loading: false,
-        message:
-          "Falha ao ler o ficheiro. Tente novamente.",
+        message: "Falha ao ler o ficheiro. Tente novamente.",
       });
     }
   }
 
   return (
     <AppShell>
-      <section className="relative overflow-hidden rounded-[28px] bg-primary px-5 py-7 text-primary-foreground shadow-sm print:hidden sm:px-7">
-        <div className="relative z-10">
-          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] opacity-80">
-            <Sparkles className="h-4 w-4" />
-            Moza Empregos
-          </div>
-
-          <h1 className="mt-2 text-3xl font-black tracking-tight sm:text-4xl">
-            Crie um CV que se destaca.
-          </h1>
-
-          <p className="mt-2 max-w-2xl text-sm leading-6 opacity-90 sm:text-base">
-            Escolha um modelo profissional, preencha
-            os seus dados e descarregue um CV pronto
-            para candidaturas.
-          </p>
-        </div>
-
-        <div
-          aria-hidden
-          className="absolute -right-12 -top-16 h-44 w-44 rounded-full bg-white/10"
-        />
-
-        <div
-          aria-hidden
-          className="absolute -bottom-24 right-20 h-48 w-48 rounded-full bg-black/10"
-        />
-      </section>
-
-      <div className="mt-5 print:hidden">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <p className="text-sm font-bold">
-              O seu CV
-            </p>
-
-            <p className="text-xs text-muted-foreground">
-              Complete os passos abaixo.
+      <main className="mx-auto w-full max-w-7xl px-1 pb-10 print:px-0">
+        <section className="relative overflow-hidden rounded-[28px] bg-primary px-5 py-7 text-primary-foreground shadow-sm print:hidden sm:px-8 sm:py-8">
+          <div className="relative z-10 max-w-2xl">
+            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] opacity-80">
+              <Sparkles className="h-4 w-4" />
+              Moza Empregos
+            </div>
+            <h1 className="mt-2 text-3xl font-black tracking-tight sm:text-4xl">
+              Crie o seu CV sem complicação.
+            </h1>
+            <p className="mt-2 text-sm leading-6 opacity-90 sm:text-base">
+              Escolha um modelo, responda a perguntas simples e veja o seu CV a ganhar forma.
             </p>
           </div>
+          <div aria-hidden className="absolute -right-12 -top-16 h-44 w-44 rounded-full bg-white/10" />
+          <div aria-hidden className="absolute -bottom-24 right-20 h-48 w-48 rounded-full bg-black/10" />
+        </section>
 
-          <div className="hidden rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary sm:block">
-            Passo {step + 1} de {STEPS.length}
+        <div className="mt-5 print:hidden">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-bold">{STEPS[step]}</p>
+              <p className="text-xs text-muted-foreground">
+                {step === 0
+                  ? "Primeiro escolha o visual do seu CV."
+                  : "Pode voltar e alterar qualquer informação."}
+              </p>
+            </div>
+            <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
+              {step + 1} / {STEPS.length}
+            </span>
           </div>
-        </div>
 
-        <nav className="no-scrollbar mt-3 -mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
-          {STEPS.map((label, index) => {
-            const active = index === step;
-            const completed = index < step;
-
-            return (
+          <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+            {STEPS.map((label, index) => (
               <button
                 key={label}
                 type="button"
                 onClick={() => setStep(index)}
-                aria-current={
-                  active ? "step" : undefined
-                }
                 className={[
-                  "flex shrink-0 items-center gap-1.5 rounded-full border px-3.5 py-2 text-sm font-semibold transition-all",
-                  active
-                    ? "border-primary bg-primary text-primary-foreground shadow-sm"
-                    : completed
+                  "flex shrink-0 items-center gap-1.5 rounded-full border px-3.5 py-2 text-xs font-bold transition",
+                  index === step
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : index < step
                       ? "border-primary/20 bg-primary/5 text-primary"
-                      : "border-border bg-card text-muted-foreground hover:border-primary/30",
+                      : "border-border bg-card text-muted-foreground",
                 ].join(" ")}
               >
-                {completed ? (
-                  <Check className="h-3.5 w-3.5" />
-                ) : (
-                  <span>{index + 1}</span>
-                )}
-
+                {index < step ? <Check className="h-3.5 w-3.5" /> : index + 1}
                 {label}
               </button>
-            );
-          })}
-        </nav>
-      </div>
-
-      <div className="mt-5 grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-        <div className="print:hidden">
-          <div className="mb-4 overflow-hidden rounded-[24px] border border-primary/15 bg-gradient-to-br from-primary/10 via-card to-card p-4 shadow-sm">
-            <div className="flex items-start gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-                <Sparkles className="h-5 w-5" />
-              </div>
-
-              <div className="min-w-0">
-                <p className="text-sm font-bold">
-                  Já tem um CV?
-                </p>
-
-                <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                  Envie o seu CV antigo em PDF ou
-                  uma fotografia legível. A IA tenta
-                  preencher os formulários
-                  automaticamente.
-                </p>
-              </div>
-            </div>
-
-            <input
-              ref={cvInput}
-              type="file"
-              accept="application/pdf,image/*"
-              className="hidden"
-              onChange={(e) => {
-                const file =
-                  e.target.files?.[0];
-
-                if (file) {
-                  void onCvFile(file);
-                }
-
-                e.target.value = "";
-              }}
-            />
-
-            <Button
-              variant="outline"
-              className="mt-4 w-full gap-2 bg-background sm:w-auto"
-              disabled={aiState.loading}
-              onClick={() =>
-                cvInput.current?.click()
-              }
-            >
-              {aiState.loading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Upload className="h-4 w-4" />
-              )}
-
-              {aiState.loading
-                ? "A analisar..."
-                : "Carregar CV antigo"}
-            </Button>
-
-            {aiState.message && (
-              <p
-                className="mt-2 text-xs text-muted-foreground"
-                role="status"
-              >
-                {aiState.message}
-              </p>
-            )}
-          </div>
-
-          <div className="rounded-[26px] border border-border bg-card p-4 shadow-sm sm:p-5">
-            {step === 1 && (
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="sm:col-span-2 flex items-center gap-4 rounded-2xl border border-border bg-background p-4">
-                  {data.photo ? (
-                    <img
-                      src={data.photo}
-                      alt="Fotografia"
-                      className="h-16 w-16 rounded-full object-cover ring-2 ring-primary/15"
-                    />
-                  ) : (
-                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted">
-                      <UserRound className="h-7 w-7 text-muted-foreground" />
-                    </div>
-                  )}
-
-                  <div className="min-w-0">
-                    <p className="text-sm font-bold">
-                      Fotografia
-                    </p>
-
-                    <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                      Use uma foto de rosto, fundo
-                      simples e roupa formal.
-                    </p>
-
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      <input
-                        ref={photoInput}
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={(e) => {
-                          const file =
-                            e.target.files?.[0];
-
-                          if (file) {
-                            void onPhoto(file);
-                          }
-
-                          e.target.value = "";
-                        }}
-                      />
-
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() =>
-                          photoInput.current?.click()
-                        }
-                      >
-                        Carregar foto
-                      </Button>
-
-                      {data.photo && (
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() =>
-                            set("photo", "")
-                          }
-                        >
-                          Remover
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                <Field
-                  label="Nome completo"
-                  placeholder="Ex.: Ana Macuácua"
-                  hint="Escreva o nome como aparece no BI."
-                  value={data.fullName}
-                  onChange={(v) =>
-                    set("fullName", v)
-                  }
-                />
-
-                <Field
-                  label="Cargo pretendido"
-                  placeholder="Ex.: Gestora de Operações"
-                  hint="A função que procura, não a atual."
-                  value={data.title}
-                  onChange={(v) =>
-                    set("title", v)
-                  }
-                />
-
-                <Field
-                  label="Email"
-                  placeholder="Ex.: ana.macuacua@email.com"
-                  value={data.email}
-                  onChange={(v) =>
-                    set("email", v)
-                  }
-                  type="email"
-                />
-
-                <Field
-                  label="Telefone"
-                  placeholder="Ex.: +258 84 000 0000"
-                  value={data.phone}
-                  onChange={(v) =>
-                    set("phone", v)
-                  }
-                />
-
-                <Field
-                  label="Localização"
-                  placeholder="Ex.: Maputo, Moçambique"
-                  value={data.location}
-                  onChange={(v) =>
-                    set("location", v)
-                  }
-                />
-
-                <div className="sm:col-span-2">
-                  <Label htmlFor="summary">
-                    Resumo profissional
-                  </Label>
-
-                  <Textarea
-                    id="summary"
-                    rows={4}
-                    placeholder="Ex.: Profissional com 6 anos de experiência em operações, focada em resultados e liderança de equipas."
-                    value={data.summary}
-                    onChange={(e) =>
-                      set(
-                        "summary",
-                        e.target.value,
-                      )
-                    }
-                    className="mt-1"
-                  />
-
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    3 a 4 linhas: anos de
-                    experiência, área e um resultado
-                    concreto.
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {step === 2 && (
-              <div className="space-y-4">
-                {data.experiences.map(
-                  (exp, index) => (
-                    <div
-                      key={index}
-                      className="rounded-2xl border border-border bg-background p-4"
-                    >
-                      <div className="mb-3 flex items-center justify-between">
-                        <p className="text-sm font-bold">
-                          Experiência {index + 1}
-                        </p>
-
-                        {data.experiences.length >
-                          1 && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="gap-1 text-destructive"
-                            onClick={() =>
-                              removeItem(
-                                setData,
-                                "experiences",
-                                index,
-                              )
-                            }
-                          >
-                            <Trash2 className="h-4 w-4" />
-                            Remover
-                          </Button>
-                        )}
-                      </div>
-
-                      <div className="grid gap-3 sm:grid-cols-2">
-                        <Field
-                          label="Cargo"
-                          placeholder="Ex.: Assistente Administrativa"
-                          value={exp.role}
-                          onChange={(v) =>
-                            updateItem(
-                              setData,
-                              "experiences",
-                              index,
-                              { role: v },
-                            )
-                          }
-                        />
-
-                        <Field
-                          label="Empresa"
-                          placeholder="Ex.: Grupo Zambeze"
-                          value={exp.company}
-                          onChange={(v) =>
-                            updateItem(
-                              setData,
-                              "experiences",
-                              index,
-                              { company: v },
-                            )
-                          }
-                        />
-
-                        <Field
-                          label="Período"
-                          placeholder="Ex.: Jan 2022 — Atual"
-                          value={exp.period}
-                          onChange={(v) =>
-                            updateItem(
-                              setData,
-                              "experiences",
-                              index,
-                              { period: v },
-                            )
-                          }
-                        />
-                      </div>
-
-                      <Label className="mt-4 block">
-                        Descrição
-                      </Label>
-
-                      <Textarea
-                        rows={3}
-                        className="mt-1"
-                        placeholder="Ex.: Coordenei uma equipa de 12 pessoas e reduzi em 18% os custos logísticos."
-                        value={exp.description}
-                        onChange={(e) =>
-                          updateItem(
-                            setData,
-                            "experiences",
-                            index,
-                            {
-                              description:
-                                e.target.value,
-                            },
-                          )
-                        }
-                      />
-
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        Comece por um verbo de ação e
-                        inclua números sempre que
-                        possível.
-                      </p>
-                    </div>
-                  ),
-                )}
-
-                <Button
-                  variant="outline"
-                  className="w-full gap-1 sm:w-auto"
-                  onClick={() =>
-                    setData((p) => ({
-                      ...p,
-                      experiences: [
-                        ...p.experiences,
-                        {
-                          role: "",
-                          company: "",
-                          period: "",
-                          description: "",
-                        },
-                      ],
-                    }))
-                  }
-                >
-                  <Plus className="h-4 w-4" />
-                  Adicionar experiência
-                </Button>
-              </div>
-            )}
-
-            {step === 3 && (
-              <div className="space-y-4">
-                {data.education.map(
-                  (edu, index) => (
-                    <div
-                      key={index}
-                      className="rounded-2xl border border-border bg-background p-4"
-                    >
-                      <div className="mb-3 flex items-center justify-between">
-                        <p className="text-sm font-bold">
-                          Formação {index + 1}
-                        </p>
-
-                        {data.education.length >
-                          1 && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="gap-1 text-destructive"
-                            onClick={() =>
-                              removeItem(
-                                setData,
-                                "education",
-                                index,
-                              )
-                            }
-                          >
-                            <Trash2 className="h-4 w-4" />
-                            Remover
-                          </Button>
-                        )}
-                      </div>
-
-                      <div className="grid gap-3 sm:grid-cols-2">
-                        <Field
-                          label="Curso"
-                          placeholder="Ex.: Licenciatura em Gestão"
-                          value={edu.course}
-                          onChange={(v) =>
-                            updateItem(
-                              setData,
-                              "education",
-                              index,
-                              { course: v },
-                            )
-                          }
-                        />
-
-                        <Field
-                          label="Instituição"
-                          placeholder="Ex.: Universidade Eduardo Mondlane"
-                          value={edu.school}
-                          onChange={(v) =>
-                            updateItem(
-                              setData,
-                              "education",
-                              index,
-                              { school: v },
-                            )
-                          }
-                        />
-
-                        <Field
-                          label="Período"
-                          placeholder="Ex.: 2015 — 2019"
-                          value={edu.period}
-                          onChange={(v) =>
-                            updateItem(
-                              setData,
-                              "education",
-                              index,
-                              { period: v },
-                            )
-                          }
-                        />
-                      </div>
-                    </div>
-                  ),
-                )}
-
-                <Button
-                  variant="outline"
-                  className="w-full gap-1 sm:w-auto"
-                  onClick={() =>
-                    setData((p) => ({
-                      ...p,
-                      education: [
-                        ...p.education,
-                        {
-                          course: "",
-                          school: "",
-                          period: "",
-                        },
-                      ],
-                    }))
-                  }
-                >
-                  <Plus className="h-4 w-4" />
-                  Adicionar formação
-                </Button>
-              </div>
-            )}
-
-            {step === 4 && (
-              <div className="grid gap-5">
-                <div>
-                  <Label htmlFor="skills">
-                    Competências
-                  </Label>
-
-                  <Textarea
-                    id="skills"
-                    rows={5}
-                    className="mt-1"
-                    placeholder="Ex.: Atendimento ao cliente, Excel avançado, Gestão de stock, Trabalho em equipa"
-                    value={data.skills}
-                    onChange={(e) =>
-                      set(
-                        "skills",
-                        e.target.value,
-                      )
-                    }
-                  />
-
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Separe por vírgulas ou escreva uma
-                    por linha.
-                  </p>
-                </div>
-
-                <div>
-                  <Label htmlFor="languages">
-                    Idiomas
-                  </Label>
-
-                  <Textarea
-                    id="languages"
-                    rows={4}
-                    className="mt-1"
-                    placeholder="Ex.: Português (nativo), Inglês (intermédio), Changana"
-                    value={data.languages}
-                    onChange={(e) =>
-                      set(
-                        "languages",
-                        e.target.value,
-                      )
-                    }
-                  />
-                </div>
-
-                <div className="rounded-2xl border border-dashed border-border bg-background p-4">
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <p className="text-sm font-bold">Campos / secções adicionais</p>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        Adicione qualquer informação que não esteja nos campos acima.
-                      </p>
-                    </div>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      className="gap-1"
-                      onClick={() =>
-                        set(
-                          "customSections",
-                          [
-                            ...data.customSections,
-                            {
-                              id: `custom-${Date.now()}-${data.customSections.length}`,
-                              title: "",
-                              content: "",
-                            },
-                          ],
-                        )
-                      }
-                    >
-                      <Plus className="h-4 w-4" />
-                      Adicionar
-                    </Button>
-                  </div>
-
-                  {data.customSections.length > 0 && (
-                    <div className="mt-4 space-y-3">
-                      {data.customSections.map((section, index) => (
-                        <div
-                          key={section.id}
-                          className="rounded-xl border border-border bg-card p-3"
-                        >
-                          <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
-                            <Field
-                              label="Nome da secção"
-                              placeholder="Ex.: Certificações, Projectos, Voluntariado"
-                              value={section.title}
-                              onChange={(v) =>
-                                set(
-                                  "customSections",
-                                  data.customSections.map((item, i) =>
-                                    i === index ? { ...item, title: v } : item,
-                                  ),
-                                )
-                              }
-                            />
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              className="mt-5 gap-1 text-destructive"
-                              onClick={() =>
-                                set(
-                                  "customSections",
-                                  data.customSections.filter((_, i) => i !== index),
-                                )
-                              }
-                            >
-                              <Trash2 className="h-4 w-4" />
-                              Remover
-                            </Button>
-                          </div>
-
-                          <div className="mt-3">
-                            <Label>Conteúdo</Label>
-                            <Textarea
-                              rows={4}
-                              className="mt-1"
-                              placeholder="Escreva aqui a informação adicional..."
-                              value={section.content}
-                              onChange={(e) =>
-                                set(
-                                  "customSections",
-                                  data.customSections.map((item, i) =>
-                                    i === index
-                                      ? { ...item, content: e.target.value }
-                                      : item,
-                                  ),
-                                )
-                              }
-                            />
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {step === 0 && (
-              <div>
-                <div className="mb-5">
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-                    <div>
-                      <p className="text-lg font-black tracking-tight">
-                        Escolha o seu modelo
-                      </p>
-
-                      <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                        Todos os modelos usam o mesmo
-                        conteúdo. Escolha apenas o
-                        estilo que combina consigo.
-                      </p>
-                    </div>
-
-                    <div className="text-xs font-semibold text-muted-foreground">
-                      {visibleTemplates.length}{" "}
-                      modelos
-                    </div>
-                  </div>
-
-                  <div className="mt-4 relative">
-                    <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-
-                    <Input
-                      value={templateSearch}
-                      onChange={(e) =>
-                        setTemplateSearch(
-                          e.target.value,
-                        )
-                      }
-                      placeholder="Pesquisar modelo..."
-                      className="h-11 rounded-xl pl-9"
-                    />
-                  </div>
-
-                  <div className="no-scrollbar mt-3 flex gap-2 overflow-x-auto pb-1">
-                    {TEMPLATE_FILTERS.map(
-                      (filter) => {
-                        const active =
-                          filter ===
-                          templateFilter;
-
-                        return (
-                          <button
-                            key={filter}
-                            type="button"
-                            onClick={() =>
-                              setTemplateFilter(
-                                filter,
-                              )
-                            }
-                            className={[
-                              "shrink-0 rounded-full border px-3.5 py-2 text-xs font-bold transition-all",
-                              active
-                                ? "border-primary bg-primary text-primary-foreground shadow-sm"
-                                : "border-border bg-background text-muted-foreground hover:border-primary/30 hover:text-foreground",
-                            ].join(" ")}
-                          >
-                            {filter}
-                          </button>
-                        );
-                      },
-                    )}
-                  </div>
-                </div>
-
-                {visibleTemplates.length > 0 ? (
-                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                    {visibleTemplates.map(
-                      (tpl) => {
-                        const selected =
-                          tpl.id ===
-                          data.templateId;
-
-                        return (
-                          <button
-                            key={tpl.id}
-                            type="button"
-                            onClick={() =>
-                              set(
-                                "templateId",
-                                tpl.id,
-                              )
-                            }
-                            aria-pressed={
-                              selected
-                            }
-                            className={[
-                              "group relative overflow-hidden rounded-2xl border bg-background p-2 text-left transition-all duration-200",
-                              selected
-                                ? "border-primary ring-2 ring-primary/25 shadow-lg"
-                                : "border-border hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md",
-                            ].join(" ")}
-                          >
-                            <div className="relative">
-                              <CvThumb
-                                data={preview}
-                                template={tpl}
-                                width={150}
-                              />
-
-                              {tpl.premium && (
-                                <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-black/75 px-2 py-1 text-[8px] font-bold uppercase tracking-wider text-white backdrop-blur">
-                                  <Crown className="h-2.5 w-2.5" />
-                                  Premium
-                                </span>
-                              )}
-
-                              {selected && (
-                                <span className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md">
-                                  <Check className="h-4 w-4" />
-                                </span>
-                              )}
-                            </div>
-
-                            <div className="px-1 pb-1 pt-3">
-                              <div className="flex items-start justify-between gap-2">
-                                <div className="min-w-0">
-                                  <p className="truncate text-sm font-black">
-                                    {tpl.name}
-                                  </p>
-
-                                  <p className="mt-0.5 text-[10px] font-semibold text-primary">
-                                    {templateCategory(
-                                      tpl.id,
-                                    )}
-                                  </p>
-                                </div>
-                              </div>
-
-                              <p className="mt-2 line-clamp-2 text-[10px] leading-4 text-muted-foreground">
-                                {tpl.description}
-                              </p>
-
-                              <p className="mt-2 text-[9px] font-semibold text-muted-foreground">
-                                {tpl.premium
-                                  ? "Modelo premium"
-                                  : "Modelo gratuito"}
-                              </p>
-                            </div>
-                          </button>
-                        );
-                      },
-                    )}
-                  </div>
-                ) : (
-                  <div className="rounded-2xl border border-dashed border-border bg-muted/30 px-5 py-10 text-center">
-                    <Search className="mx-auto h-7 w-7 text-muted-foreground" />
-
-                    <p className="mt-3 text-sm font-bold">
-                      Nenhum modelo encontrado
-                    </p>
-
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      Experimente outro nome ou
-                      categoria.
-                    </p>
-
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="mt-4"
-                      onClick={() => {
-                        setTemplateSearch("");
-                        setTemplateFilter(
-                          "Todos",
-                        );
-                      }}
-                    >
-                      Ver todos os modelos
-                    </Button>
-                  </div>
-                )}
-              </div>
-            )}
-
-            <div className="mt-5 flex items-center justify-between gap-2 border-t border-border pt-4">
-              <Button
-                variant="outline"
-                disabled={step === 0}
-                onClick={() =>
-                  setStep((s) =>
-                    Math.max(0, s - 1),
-                  )
-                }
-              >
-                Anterior
-              </Button>
-
-              {step < STEPS.length - 1 ? (
-                <Button
-                  onClick={() =>
-                    setStep((s) =>
-                      Math.min(
-                        STEPS.length - 1,
-                        s + 1,
-                      ),
-                    )
-                  }
-                >
-                  Seguinte
-                </Button>
-              ) : (
-                <Button
-                  className="gap-1"
-                  disabled={pdf.busy}
-                  onClick={openPayment}
-                >
-                  {pdf.busy ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Download className="h-4 w-4" />
-                  )}
-
-                  {pdf.paid
-                    ? "Descarregar PDF"
-                    : `Pagar e descarregar${
-                        pdf.amount
-                          ? ` · ${pdf.amount} MZN`
-                          : ""
-                      }`}
-                </Button>
-              )}
-            </div>
+            ))}
           </div>
         </div>
 
-        <div className="lg:sticky lg:top-24 lg:self-start">
-          <div className="mb-2 flex items-center justify-between gap-3 print:hidden">
-            <div>
-              <p className="text-sm font-bold">
-                Pré-visualização
-              </p>
-
-              <p className="text-xs text-muted-foreground">
-                {template.name} ·{" "}
-                {templateCategory(
-                  template.id,
-                )}
-              </p>
-            </div>
-
-            {template.premium && (
-              <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-[10px] font-bold text-primary">
-                <Crown className="h-3 w-3" />
-                Premium
+        {step === 0 ? (
+          <section className="mt-5 rounded-[28px] border border-border bg-card p-4 shadow-sm sm:p-6 print:hidden">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="text-xl font-black tracking-tight sm:text-2xl">
+                  Escolha o seu modelo
+                </p>
+                <p className="mt-1 max-w-xl text-sm leading-6 text-muted-foreground">
+                  Deslize para os lados, amplie um modelo e escolha o que mais gosta.
+                </p>
+              </div>
+              <span className="text-xs font-bold text-muted-foreground">
+                {galleryIndex + 1} de {CV_TEMPLATES.length}
               </span>
-            )}
-          </div>
-
-          <div className="relative overflow-hidden rounded-[24px] border border-border bg-white shadow-sm print:border-0">
-            <div className="origin-top-left [zoom:0.44] sm:[zoom:0.72] lg:[zoom:1] print:[zoom:1]">
-              <div id="cv-print-area" className="relative">
-                <CvPreview
-                  data={preview}
-                  template={template}
-                />
-
-                {!pdf.paid ? (
-                  <div
-                    aria-hidden
-                    className="pointer-events-none absolute inset-0 grid select-none place-items-center overflow-hidden"
-                  >
-                    <div className="-rotate-30 space-y-6 text-center">
-                      {[0, 1, 2, 3, 4].map(
-                        (i) => (
-                          <p
-                            key={i}
-                            className="whitespace-nowrap text-3xl font-extrabold tracking-[0.3em] text-black/20 sm:text-4xl"
-                          >
-                            MOZA EMPREGOS · AMOSTRA
-                          </p>
-                        ),
-                      )}
-                    </div>
-                  </div>
-                ) : null}
-              </div>
             </div>
-          </div>
 
-          <Button
-            variant="outline"
-            className="mt-3 w-full gap-1 print:hidden"
-            disabled={pdf.busy}
-            onClick={openPayment}
-          >
-            {pdf.busy ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Download className="h-4 w-4" />
-            )}
-
-            {pdf.paid
-              ? "Descarregar PDF"
-              : `Pagar e descarregar${
-                  pdf.amount
-                    ? ` · ${pdf.amount} MZN`
-                    : ""
-                }`}
-          </Button>
-
-          {!pdf.paid ? (
-            <Button
-              variant="ghost"
-              className="mt-2 w-full print:hidden"
-              disabled={pdf.busy}
-              onClick={() => void pdf.recheck()}
-            >
-              Já paguei — verificar
-            </Button>
-          ) : null}
-
-          {pdf.message ? (
-            <p className="mt-2 text-center text-xs text-destructive print:hidden">
-              {pdf.message}
-            </p>
-          ) : null}
-
-          {!pdf.paid ? (
-            <p className="mt-2 text-center text-xs text-muted-foreground print:hidden">
-              Pagamento seguro por M-Pesa,
-              mKesh ou cartão.
-            </p>
-          ) : null}
-        </div>
-      </div>
-
-      {paymentOpen && !pdf.paid ? (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
-          onMouseDown={(e) => {
-            if (e.target === e.currentTarget) {
-              setPaymentOpen(false);
-            }
-          }}
-        >
-          <div
-            className="w-full max-w-md rounded-3xl border border-border bg-card p-6 shadow-2xl"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="payment-title"
-          >
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <h2 id="payment-title" className="text-xl font-black">
-                  Pagar e descarregar
-                </h2>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Escolha o método de pagamento e introduza o número que pretende usar.
-                </p>
-              </div>
+            <div className="relative mt-5">
               <button
                 type="button"
-                onClick={() => setPaymentOpen(false)}
-                className="rounded-full p-2 text-muted-foreground hover:bg-muted"
-                aria-label="Fechar"
+                onClick={() => scrollGallery(-1)}
+                disabled={galleryIndex === 0}
+                aria-label="Modelo anterior"
+                className="absolute left-1 top-1/2 z-20 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-background/95 shadow-md disabled:opacity-30 sm:flex"
               >
-                <X className="h-5 w-5" />
+                <ChevronLeft className="h-5 w-5" />
+              </button>
+
+              <div
+                ref={galleryRef}
+                onScroll={(event) => {
+                  const element = event.currentTarget;
+                  const children = Array.from(element.children) as HTMLElement[];
+                  if (!children.length) return;
+                  const center = element.scrollLeft + element.clientWidth / 2;
+                  let closest = 0;
+                  let distance = Number.POSITIVE_INFINITY;
+                  children.forEach((child, index) => {
+                    const childCenter = child.offsetLeft + child.offsetWidth / 2;
+                    const d = Math.abs(childCenter - center);
+                    if (d < distance) {
+                      distance = d;
+                      closest = index;
+                    }
+                  });
+                  if (closest !== galleryIndex) {
+                    setGalleryIndex(closest);
+                    chooseTemplate(CV_TEMPLATES[closest]!.id);
+                  }
+                }}
+                className="no-scrollbar flex snap-x snap-mandatory gap-4 overflow-x-auto px-1 py-2 sm:px-10"
+              >
+                {CV_TEMPLATES.map((tpl) => {
+                  const selected = tpl.id === data.templateId;
+                  return (
+                    <article
+                      key={tpl.id}
+                      className={[
+                        "group w-[78vw] max-w-[330px] shrink-0 snap-center rounded-3xl border bg-background p-2 transition sm:w-[31%]",
+                        selected
+                          ? "border-primary ring-2 ring-primary/20 shadow-lg"
+                          : "border-border hover:border-primary/40 hover:shadow-md",
+                      ].join(" ")}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => {
+                          chooseTemplate(tpl.id);
+                          setGalleryIndex(CV_TEMPLATES.findIndex((x) => x.id === tpl.id));
+                        }}
+                        className="block w-full text-left"
+                        aria-pressed={selected}
+                      >
+                        <div className="relative overflow-hidden rounded-2xl bg-muted">
+                          <CvThumb data={preview} template={tpl} width={330} />
+                          {tpl.premium ? (
+                            <span className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full bg-black/75 px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider text-white backdrop-blur">
+                              <Crown className="h-3 w-3" />
+                              Premium
+                            </span>
+                          ) : null}
+                          {selected ? (
+                            <span className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground shadow">
+                              <Check className="h-4 w-4" />
+                            </span>
+                          ) : null}
+                        </div>
+                        <div className="px-2 pb-2 pt-3">
+                          <p className="text-base font-black">{tpl.name}</p>
+                          <p className="mt-0.5 text-xs font-bold text-primary">
+                            {templateCategory(tpl.id)}
+                          </p>
+                          <p className="mt-1.5 line-clamp-2 text-xs leading-5 text-muted-foreground">
+                            {tpl.description}
+                          </p>
+                        </div>
+                      </button>
+
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="mx-2 mb-2 w-[calc(100%-1rem)] gap-1.5"
+                        onClick={() => setZoomTemplate(tpl.id)}
+                      >
+                        <Expand className="h-3.5 w-3.5" />
+                        Ampliar
+                      </Button>
+                    </article>
+                  );
+                })}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => scrollGallery(1)}
+                disabled={galleryIndex === CV_TEMPLATES.length - 1}
+                aria-label="Próximo modelo"
+                className="absolute right-1 top-1/2 z-20 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-background/95 shadow-md disabled:opacity-30 sm:flex"
+              >
+                <ChevronRight className="h-5 w-5" />
               </button>
             </div>
 
-            <div className="mt-5 rounded-2xl bg-primary/5 p-4 text-center">
-              <p className="text-xs font-semibold text-muted-foreground">
-                Valor a pagar
-              </p>
-              <p className="mt-1 text-2xl font-black text-primary">
-                {pdf.amount ?? 150} MZN
-              </p>
+            <div className="mt-5 flex items-center justify-center gap-1.5">
+              {CV_TEMPLATES.map((tpl, index) => (
+                <button
+                  key={tpl.id}
+                  type="button"
+                  aria-label={"Ir para " + tpl.name}
+                  onClick={() => {
+                    chooseTemplate(tpl.id);
+                    setGalleryIndex(index);
+                    galleryRef.current?.children[index]?.scrollIntoView({
+                      behavior: "smooth",
+                      block: "nearest",
+                      inline: "center",
+                    });
+                  }}
+                  className={[
+                    "h-1.5 rounded-full transition-all",
+                    index === galleryIndex ? "w-7 bg-primary" : "w-1.5 bg-muted-foreground/30",
+                  ].join(" ")}
+                />
+              ))}
             </div>
 
-            <div className="mt-5">
-              <Label>Método de pagamento</Label>
-              <div className="mt-2 grid grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  onClick={() => setPaymentMethod("mpesa")}
-                  className={[
-                    "rounded-2xl border p-4 text-left transition-all",
-                    paymentMethod === "mpesa"
-                      ? "border-primary bg-primary/10 ring-2 ring-primary/20"
-                      : "border-border hover:border-primary/40",
-                  ].join(" ")}
-                >
-                  <p className="font-black">M-Pesa</p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    84 ou 85
-                  </p>
-                </button>
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-center">
+              <Button
+                size="lg"
+                className="h-12 rounded-2xl px-7 text-sm font-black"
+                onClick={() => setStep(1)}
+              >
+                Usar este modelo
+                <ChevronRight className="ml-1 h-4 w-4" />
+              </Button>
+            </div>
 
-                <button
-                  type="button"
-                  onClick={() => setPaymentMethod("mkesh")}
-                  className={[
-                    "rounded-2xl border p-4 text-left transition-all",
-                    paymentMethod === "mkesh"
-                      ? "border-primary bg-primary/10 ring-2 ring-primary/20"
-                      : "border-border hover:border-primary/40",
-                  ].join(" ")}
+            <div className="mt-5 rounded-2xl border border-dashed border-border bg-muted/30 p-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-start gap-3">
+                  <Sparkles className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                  <div>
+                    <p className="text-sm font-black">Já tem um CV?</p>
+                    <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                      Envie PDF ou imagem e podemos preencher os campos para si. Depois reveja tudo antes de continuar.
+                    </p>
+                  </div>
+                </div>
+                <input
+                  ref={cvInput}
+                  type="file"
+                  accept="application/pdf,image/*"
+                  className="hidden"
+                  onChange={(event) => {
+                    const file = event.target.files?.[0];
+                    if (file) void onCvFile(file);
+                    event.target.value = "";
+                  }}
+                />
+                <Button
+                  variant="outline"
+                  disabled={aiState.loading}
+                  onClick={() => cvInput.current?.click()}
+                  className="shrink-0 gap-2"
                 >
-                  <p className="font-black">mKesh</p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    82 ou 83
-                  </p>
-                </button>
+                  {aiState.loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                  {aiState.loading ? "A analisar..." : "Carregar CV antigo"}
+                </Button>
+              </div>
+              {aiState.message ? (
+                <p className="mt-3 text-xs text-muted-foreground" role="status">
+                  {aiState.message}
+                </p>
+              ) : null}
+            </div>
+          </section>
+        ) : (
+          <section className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,0.9fr)_minmax(390px,1.1fr)]">
+            <div className="min-w-0 print:hidden">
+              <div className="rounded-[28px] border border-border bg-card p-5 shadow-sm sm:p-6">
+                {step === 1 ? (
+                  <BasicInfo
+                    data={data}
+                    setData={setData}
+                    photoInput={photoInput}
+                    onPhoto={onPhoto}
+                  />
+                ) : null}
+
+                {step === 2 ? (
+                  <ExperienceStep data={data} setData={setData} />
+                ) : null}
+
+                {step === 3 ? (
+                  <EducationStep data={data} setData={setData} />
+                ) : null}
+
+                {step === 4 ? (
+                  <FinalStep data={data} setData={setData} />
+                ) : null}
+
+                <div className="mt-6 flex flex-col-reverse gap-3 border-t border-border pt-5 sm:flex-row sm:items-center sm:justify-between">
+                  <Button
+                    variant="outline"
+                    onClick={() => setStep((value) => Math.max(0, value - 1))}
+                  >
+                    <ChevronLeft className="mr-1 h-4 w-4" />
+                    Voltar
+                  </Button>
+
+                  {step < STEPS.length - 1 ? (
+                    <Button
+                      className="h-11 rounded-xl px-6"
+                      onClick={() => setStep((value) => Math.min(STEPS.length - 1, value + 1))}
+                    >
+                      Continuar
+                      <ChevronRight className="ml-1 h-4 w-4" />
+                    </Button>
+                  ) : (
+                    <Button
+                      className="h-11 rounded-xl px-6 gap-1.5"
+                      disabled={pdf.busy}
+                      onClick={openPayment}
+                    >
+                      {pdf.busy ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Download className="h-4 w-4" />
+                      )}
+                      {pdf.paid
+                        ? "Descarregar PDF"
+                        : "Pagar e descarregar" + (pdf.amount ? " · " + pdf.amount + " MZN" : "")}
+                    </Button>
+                  )}
+                </div>
               </div>
             </div>
 
-            <div className="mt-5">
-              <Label htmlFor="payment-phone">
-                Número de telemóvel
-              </Label>
-              <Input
-                id="payment-phone"
-                type="tel"
-                placeholder="Ex.: 84 000 0000"
-                value={paymentPhone}
-                onChange={(e) => setPaymentPhone(e.target.value)}
-                className="mt-1 h-11 rounded-xl"
-              />
-            </div>
+            <div className="lg:sticky lg:top-24 lg:self-start">
+              <div className="mb-2 flex items-center justify-between print:hidden">
+                <div>
+                  <p className="text-sm font-black">Pré-visualização</p>
+                  <p className="text-xs text-muted-foreground">
+                    {template.name} · {templateCategory(template.id)}
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="lg:hidden"
+                  onClick={() => setMobilePreviewOpen((value) => !value)}
+                >
+                  {mobilePreviewOpen ? "Fechar CV" : "Ver CV"}
+                </Button>
+              </div>
 
-            {pdf.message && (
-              <p className="mt-3 text-xs text-destructive">
-                {pdf.message}
-              </p>
-            )}
-
-            <div className="mt-6 flex gap-3">
-              <Button
-                type="button"
-                variant="outline"
-                className="flex-1"
-                disabled={pdf.busy}
-                onClick={() => setPaymentOpen(false)}
+              <div
+                className={[
+                  "overflow-hidden rounded-[24px] border border-border bg-white shadow-sm print:block",
+                  mobilePreviewOpen ? "block" : "hidden lg:block",
+                ].join(" ")}
               >
-                Cancelar
-              </Button>
+                <div className="origin-top-left [zoom:0.42] sm:[zoom:0.58] lg:[zoom:0.9] xl:[zoom:1] print:[zoom:1]">
+                  <div id="cv-print-area" className="relative">
+                    <CvPreview data={preview} template={template} />
+                    {!pdf.paid ? (
+                      <div
+                        aria-hidden
+                        className="pointer-events-none absolute inset-0 grid select-none place-items-center overflow-hidden"
+                      >
+                        <div className="-rotate-30 space-y-6 text-center">
+                          {[0, 1, 2, 3, 4].map((index) => (
+                            <p
+                              key={index}
+                              className="whitespace-nowrap text-3xl font-extrabold tracking-[0.3em] text-black/20 sm:text-4xl"
+                            >
+                              MOZA EMPREGOS · AMOSTRA
+                            </p>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+              </div>
 
               <Button
-                type="button"
-                className="flex-1"
-                disabled={pdf.busy || !paymentPhone.trim()}
-                onClick={async () => {
-                  await pdf.download(
-                    paymentPhone,
-                    paymentMethod,
-                  );
-                  if (pdf.paid) {
-                    setPaymentOpen(false);
-                  }
-                }}
+                variant="outline"
+                className="mt-3 w-full gap-1 print:hidden"
+                disabled={pdf.busy}
+                onClick={openPayment}
               >
                 {pdf.busy ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : null}
-                {pdf.busy
-                  ? "A processar..."
-                  : `Pagar ${pdf.amount ?? 150} MZN`}
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Download className="h-4 w-4" />
+                )}
+                {pdf.paid
+                  ? "Descarregar PDF"
+                  : "Pagar e descarregar" + (pdf.amount ? " · " + pdf.amount + " MZN" : "")}
               </Button>
+
+              {!pdf.paid ? (
+                <Button
+                  variant="ghost"
+                  className="mt-2 w-full print:hidden"
+                  disabled={pdf.busy}
+                  onClick={() => void pdf.recheck()}
+                >
+                  Já paguei — verificar
+                </Button>
+              ) : null}
+
+              {pdf.message ? (
+                <p className="mt-2 text-center text-xs text-destructive print:hidden">{pdf.message}</p>
+              ) : null}
+
+              {!pdf.paid ? (
+                <p className="mt-2 text-center text-xs text-muted-foreground print:hidden">
+                  Pagamento seguro por M-Pesa, mKesh ou cartão.
+                </p>
+              ) : null}
             </div>
-          </div>
-        </div>
-      ) : null}
+          </section>
+        )}
+
+        {zoomTemplate ? (
+          <TemplateZoom
+            templateId={zoomTemplate}
+            data={preview}
+            onClose={() => setZoomTemplate(null)}
+            onChoose={(id) => {
+              chooseTemplate(id);
+              setGalleryIndex(CV_TEMPLATES.findIndex((item) => item.id === id));
+              setZoomTemplate(null);
+            }}
+          />
+        ) : null}
+
+        {paymentOpen && !pdf.paid ? (
+          <PaymentDialog
+            amount={pdf.amount ?? 150}
+            paymentMethod={paymentMethod}
+            setPaymentMethod={setPaymentMethod}
+            paymentPhone={paymentPhone}
+            setPaymentPhone={setPaymentPhone}
+            busy={pdf.busy}
+            message={pdf.message}
+            onClose={() => setPaymentOpen(false)}
+            onPay={async () => {
+              await pdf.download(paymentPhone, paymentMethod);
+              if (pdf.paid) setPaymentOpen(false);
+            }}
+          />
+        ) : null}
+      </main>
     </AppShell>
   );
 }
 
-function str(value: unknown) {
-  return typeof value === "string"
-    ? value
-    : "";
+function BasicInfo({
+  data,
+  setData,
+  photoInput,
+  onPhoto,
+}: {
+  data: CvData;
+  setData: Dispatch<SetStateAction<CvData>>;
+  photoInput: React.RefObject<HTMLInputElement | null>;
+  onPhoto: (file: File) => Promise<void>;
+}) {
+  return (
+    <div>
+      <StepTitle
+        eyebrow="Passo 1"
+        title="Vamos começar pelo básico"
+        description="Só precisamos destas informações para montar a primeira versão."
+      />
+
+      <div className="mt-6 space-y-4">
+        <Field
+          label="Nome completo"
+          placeholder="Ex.: Ana Macuácua"
+          value={data.fullName}
+          onChange={(value) => setData((prev) => ({ ...prev, fullName: value }))}
+        />
+
+        <Field
+          label="Cargo ou profissão"
+          placeholder="Ex.: Assistente Administrativa"
+          value={data.title}
+          onChange={(value) => setData((prev) => ({ ...prev, title: value }))}
+        />
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field
+            label="Telefone"
+            placeholder="Ex.: +258 84 000 0000"
+            value={data.phone}
+            onChange={(value) => setData((prev) => ({ ...prev, phone: value }))}
+          />
+          <Field
+            label="Email"
+            type="email"
+            placeholder="Ex.: nome@email.com"
+            value={data.email}
+            onChange={(value) => setData((prev) => ({ ...prev, email: value }))}
+          />
+        </div>
+
+        <Field
+          label="Cidade"
+          placeholder="Ex.: Maputo, Moçambique"
+          value={data.location}
+          onChange={(value) => setData((prev) => ({ ...prev, location: value }))}
+        />
+
+        <div className="rounded-2xl border border-border bg-muted/30 p-4">
+          <div className="flex items-center gap-4">
+            {data.photo ? (
+              <img
+                src={data.photo}
+                alt="Fotografia do CV"
+                className="h-16 w-16 rounded-full object-cover ring-2 ring-primary/15"
+              />
+            ) : (
+              <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-muted">
+                <UserRound className="h-7 w-7 text-muted-foreground" />
+              </div>
+            )}
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-black">Fotografia</p>
+              <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                Opcional. Pode adicionar agora ou deixar para depois.
+              </p>
+            </div>
+            <input
+              ref={photoInput}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                if (file) void onPhoto(file);
+                event.target.value = "";
+              }}
+            />
+          </div>
+          <div className="mt-3 flex gap-2">
+            <Button variant="outline" size="sm" onClick={() => photoInput.current?.click()}>
+              {data.photo ? "Trocar foto" : "Adicionar foto"}
+            </Button>
+            {data.photo ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setData((prev) => ({ ...prev, photo: "" }))}
+              >
+                Remover
+              </Button>
+            ) : null}
+          </div>
+        </div>
+
+        <div>
+          <Label htmlFor="cv-summary">Resumo profissional <span className="font-normal text-muted-foreground">(opcional)</span></Label>
+          <Textarea
+            id="cv-summary"
+            rows={4}
+            className="mt-1"
+            placeholder="Conte em 2 ou 3 frases quem é profissionalmente e o que procura."
+            value={data.summary}
+            onChange={(event) => setData((prev) => ({ ...prev, summary: event.target.value }))}
+          />
+        </div>
+      </div>
+    </div>
+  );
 }
 
-function toDataUrl(file: File) {
-  return new Promise<string>(
-    (resolve, reject) => {
-      const reader = new FileReader();
+function ExperienceStep({
+  data,
+  setData,
+}: {
+  data: CvData;
+  setData: Dispatch<SetStateAction<CvData>>;
+}) {
+  const [started, setStarted] = useState(data.experiences.length > 0);
 
-      reader.onload = () =>
-        resolve(String(reader.result));
+  useEffect(() => {
+    if (data.experiences.length > 0) setStarted(true);
+  }, [data.experiences.length]);
 
-      reader.onerror = () =>
-        reject(new Error("read error"));
+  function startExperience() {
+    setStarted(true);
+    if (!data.experiences.length) {
+      setData((prev) => ({
+        ...prev,
+        experiences: [{ role: "", company: "", period: "", description: "" }],
+      }));
+    }
+  }
 
-      reader.readAsDataURL(file);
-    },
+  function skipExperience() {
+    setStarted(false);
+    setData((prev) => ({ ...prev, experiences: [] }));
+  }
+
+  return (
+    <div>
+      <StepTitle
+        eyebrow="Passo 2"
+        title="Tem experiência profissional?"
+        description="Adicione uma ou quantas experiências quiser. Se ainda não trabalhou, pode saltar."
+      />
+
+      {!started ? (
+        <div className="mt-6 grid gap-3 sm:grid-cols-2">
+          <ChoiceCard
+            title="Sim, tenho experiência"
+            description="Adicionar trabalho, estágio ou experiência relevante."
+            onClick={startExperience}
+          />
+          <ChoiceCard
+            title="Ainda não"
+            description="Continuar sem experiência profissional."
+            onClick={skipExperience}
+          />
+        </div>
+      ) : (
+        <div className="mt-6 space-y-4">
+          {data.experiences.map((item, index) => (
+            <div key={index} className="rounded-2xl border border-border bg-muted/20 p-4">
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <p className="text-sm font-black">Experiência {index + 1}</p>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="gap-1 text-destructive"
+                  onClick={() =>
+                    setData((prev) => ({
+                      ...prev,
+                      experiences: prev.experiences.filter((_, i) => i !== index),
+                    }))
+                  }
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Remover
+                </Button>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field
+                  label="Cargo"
+                  placeholder="Ex.: Assistente Administrativa"
+                  value={item.role}
+                  onChange={(value) =>
+                    updateExperience(setData, index, { role: value })
+                  }
+                />
+                <Field
+                  label="Empresa"
+                  placeholder="Ex.: Empresa ABC"
+                  value={item.company}
+                  onChange={(value) =>
+                    updateExperience(setData, index, { company: value })
+                  }
+                />
+                <Field
+                  label="Período"
+                  placeholder="Ex.: 2022 — Atual"
+                  value={item.period}
+                  onChange={(value) =>
+                    updateExperience(setData, index, { period: value })
+                  }
+                />
+                <div className="sm:col-span-2">
+                  <Label>O que fazia? <span className="font-normal text-muted-foreground">(opcional)</span></Label>
+                  <Textarea
+                    rows={3}
+                    className="mt-1"
+                    placeholder="Ex.: Atendimento ao cliente, organização de documentos e apoio à equipa."
+                    value={item.description}
+                    onChange={(event) =>
+                      updateExperience(setData, index, { description: event.target.value })
+                    }
+                  />
+                </div>
+              </div>
+            </div>
+          ))}
+
+          <Button
+            variant="outline"
+            className="w-full gap-1.5 sm:w-auto"
+            onClick={() =>
+              setData((prev) => ({
+                ...prev,
+                experiences: [
+                  ...prev.experiences,
+                  { role: "", company: "", period: "", description: "" },
+                ],
+              }))
+            }
+          >
+            <Plus className="h-4 w-4" />
+            Adicionar outra experiência
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function EducationStep({
+  data,
+  setData,
+}: {
+  data: CvData;
+  setData: Dispatch<SetStateAction<CvData>>;
+}) {
+  const [started, setStarted] = useState(data.education.length > 0);
+
+  useEffect(() => {
+    if (data.education.length > 0) setStarted(true);
+  }, [data.education.length]);
+
+  function startEducation() {
+    setStarted(true);
+    if (!data.education.length) {
+      setData((prev) => ({
+        ...prev,
+        education: [{ course: "", school: "", period: "" }],
+      }));
+    }
+  }
+
+  function skipEducation() {
+    setStarted(false);
+    setData((prev) => ({ ...prev, education: [] }));
+  }
+
+  return (
+    <div>
+      <StepTitle
+        eyebrow="Passo 3"
+        title="Onde estudou?"
+        description="Adicione a sua formação. Pode adicionar mais de uma."
+      />
+
+      {!started ? (
+        <div className="mt-6 grid gap-3 sm:grid-cols-2">
+          <ChoiceCard
+            title="Adicionar formação"
+            description="Curso, instituição e período."
+            onClick={startEducation}
+          />
+          <ChoiceCard
+            title="Deixar para depois"
+            description="Continuar sem formação por agora."
+            onClick={skipEducation}
+          />
+        </div>
+      ) : (
+        <div className="mt-6 space-y-4">
+          {data.education.map((item, index) => (
+            <div key={index} className="rounded-2xl border border-border bg-muted/20 p-4">
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <p className="text-sm font-black">Formação {index + 1}</p>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="gap-1 text-destructive"
+                  onClick={() =>
+                    setData((prev) => ({
+                      ...prev,
+                      education: prev.education.filter((_, i) => i !== index),
+                    }))
+                  }
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Remover
+                </Button>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field
+                  label="Curso"
+                  placeholder="Ex.: Licenciatura em Gestão"
+                  value={item.course}
+                  onChange={(value) =>
+                    updateEducation(setData, index, { course: value })
+                  }
+                />
+                <Field
+                  label="Instituição"
+                  placeholder="Ex.: Universidade Eduardo Mondlane"
+                  value={item.school}
+                  onChange={(value) =>
+                    updateEducation(setData, index, { school: value })
+                  }
+                />
+                <Field
+                  label="Período"
+                  placeholder="Ex.: 2020 — 2024"
+                  value={item.period}
+                  onChange={(value) =>
+                    updateEducation(setData, index, { period: value })
+                  }
+                />
+              </div>
+            </div>
+          ))}
+
+          <Button
+            variant="outline"
+            className="w-full gap-1.5 sm:w-auto"
+            onClick={() =>
+              setData((prev) => ({
+                ...prev,
+                education: [
+                  ...prev.education,
+                  { course: "", school: "", period: "" },
+                ],
+              }))
+            }
+          >
+            <Plus className="h-4 w-4" />
+            Adicionar outra formação
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function FinalStep({
+  data,
+  setData,
+}: {
+  data: CvData;
+  setData: Dispatch<SetStateAction<CvData>>;
+}) {
+  return (
+    <div>
+      <StepTitle
+        eyebrow="Passo 4"
+        title="Só falta o essencial"
+        description="Adicione competências e idiomas. O resto é opcional."
+      />
+
+      <div className="mt-6 space-y-5">
+        <div>
+          <Label htmlFor="cv-skills">Competências</Label>
+          <Textarea
+            id="cv-skills"
+            rows={4}
+            className="mt-1"
+            placeholder="Ex.: Atendimento ao cliente, Excel, Comunicação, Trabalho em equipa"
+            value={data.skills}
+            onChange={(event) => setData((prev) => ({ ...prev, skills: event.target.value }))}
+          />
+          <p className="mt-1 text-xs text-muted-foreground">
+            Separe por vírgulas ou escreva uma por linha.
+          </p>
+        </div>
+
+        <div>
+          <Label htmlFor="cv-languages">Idiomas</Label>
+          <Textarea
+            id="cv-languages"
+            rows={3}
+            className="mt-1"
+            placeholder="Ex.: Português — Nativo, Inglês — Intermédio"
+            value={data.languages}
+            onChange={(event) => setData((prev) => ({ ...prev, languages: event.target.value }))}
+          />
+        </div>
+
+        <div className="rounded-2xl border border-dashed border-border p-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-black">Quer acrescentar alguma coisa?</p>
+              <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                Certificações, projectos, voluntariado, prémios ou qualquer outra secção.
+              </p>
+            </div>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="gap-1"
+              onClick={() =>
+                setData((prev) => ({
+                  ...prev,
+                  customSections: [
+                    ...prev.customSections,
+                    {
+                      id: "custom-" + Date.now() + "-" + prev.customSections.length,
+                      title: "",
+                      content: "",
+                    },
+                  ],
+                }))
+              }
+            >
+              <Plus className="h-4 w-4" />
+              Adicionar
+            </Button>
+          </div>
+
+          {data.customSections.length ? (
+            <div className="mt-4 space-y-3">
+              {data.customSections.map((section, index) => (
+                <div key={section.id} className="rounded-xl border border-border bg-background p-3">
+                  <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
+                    <Field
+                      label="Nome da secção"
+                      placeholder="Ex.: Certificações"
+                      value={section.title}
+                      onChange={(value) =>
+                        setData((prev) => ({
+                          ...prev,
+                          customSections: prev.customSections.map((item, i) =>
+                            i === index ? { ...item, title: value } : item,
+                          ),
+                        }))
+                      }
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="mt-5 gap-1 text-destructive"
+                      onClick={() =>
+                        setData((prev) => ({
+                          ...prev,
+                          customSections: prev.customSections.filter((_, i) => i !== index),
+                        }))
+                      }
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      Remover
+                    </Button>
+                  </div>
+                  <div className="mt-3">
+                    <Label>Conteúdo</Label>
+                    <Textarea
+                      rows={4}
+                      className="mt-1"
+                      placeholder="Escreva a informação desta secção..."
+                      value={section.content}
+                      onChange={(event) =>
+                        setData((prev) => ({
+                          ...prev,
+                          customSections: prev.customSections.map((item, i) =>
+                            i === index ? { ...item, content: event.target.value } : item,
+                          ),
+                        }))
+                      }
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : null}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function StepTitle({
+  eyebrow,
+  title,
+  description,
+}: {
+  eyebrow: string;
+  title: string;
+  description: string;
+}) {
+  return (
+    <div>
+      <p className="text-xs font-black uppercase tracking-[0.16em] text-primary">{eyebrow}</p>
+      <h2 className="mt-1 text-2xl font-black tracking-tight">{title}</h2>
+      <p className="mt-2 text-sm leading-6 text-muted-foreground">{description}</p>
+    </div>
+  );
+}
+
+function ChoiceCard({
+  title,
+  description,
+  onClick,
+}: {
+  title: string;
+  description: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="rounded-2xl border border-border bg-background p-5 text-left transition hover:border-primary/50 hover:shadow-md"
+    >
+      <p className="font-black">{title}</p>
+      <p className="mt-1 text-xs leading-5 text-muted-foreground">{description}</p>
+    </button>
+  );
+}
+
+function TemplateZoom({
+  templateId,
+  data,
+  onClose,
+  onChoose,
+}: {
+  templateId: string;
+  data: CvData;
+  onClose: () => void;
+  onChoose: (id: string) => void;
+}) {
+  const template =
+    CV_TEMPLATES.find((item) => item.id === templateId) ?? CV_TEMPLATES[0]!;
+
+  return (
+    <div
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-3 backdrop-blur-sm sm:p-6"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Pré-visualização do modelo"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+    >
+      <div className="flex h-[96vh] w-full max-w-5xl flex-col overflow-hidden rounded-3xl bg-background shadow-2xl">
+        <div className="flex shrink-0 items-center justify-between gap-3 border-b border-border px-4 py-3">
+          <div>
+            <p className="font-black">{template.name}</p>
+            <p className="text-xs text-muted-foreground">{templateCategory(template.id)}</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={() => onChoose(template.id)}
+              className="hidden sm:inline-flex"
+            >
+              Escolher este modelo
+            </Button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-full p-2 text-muted-foreground hover:bg-muted"
+              aria-label="Fechar"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+        </div>
+
+        <div className="min-h-0 flex-1 overflow-auto bg-muted/40 p-4 sm:p-8">
+          <div className="mx-auto w-fit origin-top scale-[0.52] sm:scale-[0.7] md:scale-[0.82] lg:scale-100">
+            <CvPreview data={data} template={template} />
+          </div>
+        </div>
+
+        <div className="shrink-0 border-t border-border p-3 sm:hidden">
+          <Button className="w-full" onClick={() => onChoose(template.id)}>
+            Escolher este modelo
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PaymentDialog({
+  amount,
+  paymentMethod,
+  setPaymentMethod,
+  paymentPhone,
+  setPaymentPhone,
+  busy,
+  message,
+  onClose,
+  onPay,
+}: {
+  amount: number;
+  paymentMethod: "mpesa" | "mkesh";
+  setPaymentMethod: (value: "mpesa" | "mkesh") => void;
+  paymentPhone: string;
+  setPaymentPhone: (value: string) => void;
+  busy: boolean;
+  message: string;
+  onClose: () => void;
+  onPay: () => Promise<void>;
+}) {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+    >
+      <div className="w-full max-w-md rounded-3xl border border-border bg-card p-6 shadow-2xl" role="dialog" aria-modal="true">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h2 className="text-xl font-black">Pagar e descarregar</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Escolha o método e o número que vai usar para pagar.
+            </p>
+          </div>
+          <button type="button" onClick={onClose} className="rounded-full p-2 text-muted-foreground hover:bg-muted" aria-label="Fechar">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        <div className="mt-5 rounded-2xl bg-primary/5 p-4 text-center">
+          <p className="text-xs font-semibold text-muted-foreground">Valor a pagar</p>
+          <p className="mt-1 text-2xl font-black text-primary">{amount} MZN</p>
+        </div>
+
+        <div className="mt-5">
+          <Label>Método de pagamento</Label>
+          <div className="mt-2 grid grid-cols-2 gap-3">
+            {(["mpesa", "mkesh"] as const).map((method) => (
+              <button
+                key={method}
+                type="button"
+                onClick={() => setPaymentMethod(method)}
+                className={[
+                  "rounded-2xl border p-4 text-left transition",
+                  paymentMethod === method
+                    ? "border-primary bg-primary/10 ring-2 ring-primary/20"
+                    : "border-border hover:border-primary/40",
+                ].join(" ")}
+              >
+                <p className="font-black">{method === "mpesa" ? "M-Pesa" : "mKesh"}</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {method === "mpesa" ? "84 ou 85" : "82 ou 83"}
+                </p>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="mt-5">
+          <Label htmlFor="payment-phone">Número de telemóvel</Label>
+          <Input
+            id="payment-phone"
+            type="tel"
+            placeholder="Ex.: 84 000 0000"
+            value={paymentPhone}
+            onChange={(event) => setPaymentPhone(event.target.value)}
+            className="mt-1 h-11 rounded-xl"
+          />
+        </div>
+
+        {message ? <p className="mt-3 text-xs text-destructive">{message}</p> : null}
+
+        <div className="mt-6 flex gap-3">
+          <Button variant="outline" className="flex-1" disabled={busy} onClick={onClose}>
+            Cancelar
+          </Button>
+          <Button
+            className="flex-1"
+            disabled={busy || !paymentPhone.trim()}
+            onClick={() => void onPay()}
+          >
+            {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+            {busy ? "A processar..." : "Pagar " + amount + " MZN"}
+          </Button>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -1489,80 +1386,64 @@ function Field({
   onChange,
   type = "text",
   placeholder,
-  hint,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
   type?: string;
   placeholder?: string;
-  hint?: string;
 }) {
-  const id = label
-    .toLowerCase()
-    .replace(/\s+/g, "-");
-
+  const id = "field-" + label.toLowerCase().replace(/[^a-z0-9]+/g, "-");
   return (
     <div>
-      <Label htmlFor={id}>
-        {label}
-      </Label>
-
+      <Label htmlFor={id}>{label}</Label>
       <Input
         id={id}
         type={type}
         value={value}
         placeholder={placeholder}
-        onChange={(e) =>
-          onChange(e.target.value)
-        }
-        className="mt-1"
+        onChange={(event) => onChange(event.target.value)}
+        className="mt-1 h-11 rounded-xl"
       />
-
-      {hint && (
-        <p className="mt-1 text-xs text-muted-foreground">
-          {hint}
-        </p>
-      )}
     </div>
   );
 }
 
-function updateItem<
-  K extends "experiences" | "education",
->(
-  setData: React.Dispatch<
-    React.SetStateAction<CvData>
-  >,
-  key: K,
+function updateExperience(
+  setData: Dispatch<SetStateAction<CvData>>,
   index: number,
-  patch: Partial<CvData[K][number]>,
+  patch: Partial<CvData["experiences"][number]>,
 ) {
   setData((prev) => ({
     ...prev,
-    [key]: prev[key].map(
-      (item, i) =>
-        i === index
-          ? {
-              ...item,
-              ...patch,
-            }
-          : item,
+    experiences: prev.experiences.map((item, i) =>
+      i === index ? { ...item, ...patch } : item,
     ),
   }));
 }
 
-function removeItem(
-  setData: React.Dispatch<
-    React.SetStateAction<CvData>
-  >,
-  key: "experiences" | "education",
+function updateEducation(
+  setData: Dispatch<SetStateAction<CvData>>,
   index: number,
+  patch: Partial<CvData["education"][number]>,
 ) {
   setData((prev) => ({
     ...prev,
-    [key]: prev[key].filter(
-      (_, i) => i !== index,
+    education: prev.education.map((item, i) =>
+      i === index ? { ...item, ...patch } : item,
     ),
   }));
+}
+
+function str(value: unknown) {
+  return typeof value === "string" ? value : "";
+}
+
+function toDataUrl(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(new Error("read error"));
+    reader.readAsDataURL(file);
+  });
 }
