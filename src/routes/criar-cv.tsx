@@ -461,33 +461,33 @@ function CriarCvPage() {
                   <p className="hidden text-[10px] text-muted-foreground sm:block">Carregue PDF ou imagem e preenchemos por si.</p>
                 </div>
               </div>
-                <input
-                  ref={cvInput}
-                  type="file"
-                  accept="application/pdf,image/*"
-                  className="hidden"
-                  onChange={(event) => {
-                    const file = event.target.files?.[0];
-                    if (file) void onCvFile(file);
-                    event.target.value = "";
-                  }}
-                />
-                <Button
-                  variant="outline"
-                  disabled={aiState.loading}
-                  onClick={() => cvInput.current?.click()}
-                  className="shrink-0 gap-2"
-                >
-                  {aiState.loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-                  {aiState.loading ? "A analisar..." : "Carregar CV antigo"}
-                </Button>
-              </div>
-              {aiState.message ? (
-                <p className="mt-2 text-[11px] text-muted-foreground" role="status">
-                  {aiState.message}
-                </p>
-              ) : null}
+              <input
+                ref={cvInput}
+                type="file"
+                accept="application/pdf,image/*"
+                className="hidden"
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  if (file) void onCvFile(file);
+                  event.target.value = "";
+                }}
+              />
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={aiState.loading}
+                onClick={() => cvInput.current?.click()}
+                className="h-8 shrink-0 gap-1.5 px-3 text-[11px]"
+              >
+                {aiState.loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                {aiState.loading ? "A analisar..." : "Carregar CV antigo"}
+              </Button>
             </div>
+            {aiState.message ? (
+              <p className="mt-2 text-[11px] text-muted-foreground" role="status">
+                {aiState.message}
+              </p>
+            ) : null}
           </section>
         ) : (
           <section className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,0.9fr)_minmax(390px,1.1fr)]">
