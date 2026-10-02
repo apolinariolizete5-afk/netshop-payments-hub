@@ -81,6 +81,10 @@ function templateCategory(templateId: string) {
     "template-09": "Primeiro emprego",
     "template-10": "Académico",
     "template-11": "Criativo",
+    "template-12": "Finanças",
+    "template-13": "ONG / Desenvolvimento",
+    "template-14": "ATS / Recrutamento",
+    "template-15": "Moçambique",
   };
 
   return categories[templateId] ?? "Profissional";
@@ -224,6 +228,7 @@ function CriarCvPage() {
         loading: false,
         message: "Preenchimento concluído. Reveja os dados antes de continuar.",
       });
+      setStep(1);
     } catch {
       setAiState({
         loading: false,
