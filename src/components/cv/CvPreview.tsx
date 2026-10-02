@@ -1297,7 +1297,7 @@ function Template12({ data, id, fullPage = false }: { data: CvData; id?: string;
           <h1 style={{ margin: "8px 0 4px", fontSize: 25, lineHeight: 1.05 }}>{data.fullName || "O SEU NOME"}</h1>
           <div style={{ color: "#D9DEE7", fontSize: 10.5 }}>{data.title || "PROFISSIONAL"}</div>
         </div>
-        <div style={{ border: "2px solid #B08A45", padding: 10, display: "flex", alignItems: "center", justifyContent: "center" }}><Photo src={data.photo} square /></div>
+        <div style={{ border: "2px solid #B08A45", padding: 10, display: "flex", alignItems: "center", justifyContent: "center" }}><Photo src={data.photo} /></div>
       </header>
       <div style={{ display: "grid", gridTemplateColumns: "48mm 1fr", gap: 14, marginTop: 14 }}>
         <aside style={{ borderRight: "1px solid #B08A45", paddingRight: 10 }}>
