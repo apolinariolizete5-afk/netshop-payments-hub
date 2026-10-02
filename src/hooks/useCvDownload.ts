@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useSession } from "@/hooks/useSession";
 import {
@@ -63,6 +63,7 @@ export function useCvDownload() {
   const [amount, setAmount] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
+  const actionLock = useRef(false);
 
   useEffect(() => {
     let active = true;
@@ -93,6 +94,9 @@ export function useCvDownload() {
       phone?: string,
       method?: PaymentMethod,
     ) => {
+      if (actionLock.current) return;
+      actionLock.current = true;
+      try {
       if (paid) {
         window.print();
         return;
@@ -265,11 +269,17 @@ if (!selectedMethod) {
       } finally {
         setBusy(false);
       }
+      } finally {
+        actionLock.current = false;
+      }
     },
     [paid, user, pay, access],
   );
 
   const recheck = useCallback(async () => {
+    if (actionLock.current) return;
+    actionLock.current = true;
+    try {
     if (!user) {
       setMessage(
         "Inicie sessão para verificar o pagamento.",
@@ -296,6 +306,11 @@ if (!selectedMethod) {
       );
     } finally {
       setBusy(false);
+      actionLock.current = false;
+    }
+    } catch {
+      actionLock.current = false;
+      setMessage("Não foi possível verificar o pagamento.");
     }
   }, [user, access]);
 
