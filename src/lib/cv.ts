@@ -237,7 +237,7 @@ export const CV_TEMPLATES: CvTemplate[] = [
     id: "template-08",
     name: "Wave Blue",
     description: "Design contemporâneo com ondas, azul corporativo e composição dinâmica.",
-    layout: "corporate",
+    layout: "tech",
     accent: "#2F5878",
     surface: "#FFFFFF",
     photoShape: "circle",
