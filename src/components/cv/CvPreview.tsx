@@ -889,9 +889,11 @@ function Template04({
 function Template05({
   data,
   id,
+  fullPage = false,
 }: {
   data: CvData;
   id?: string;
+  fullPage?: boolean;
 }) {
   return (
     <BasePage id={id}>
