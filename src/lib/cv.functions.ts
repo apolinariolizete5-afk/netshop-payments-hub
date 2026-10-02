@@ -427,6 +427,155 @@ function normalizeCvJson(value: unknown) {
   };
 }
 
+async function callOpenRouter(
+  apiKey: string,
+  instruction: string,
+  data: ParseInput,
+) {
+  const fileData = "data:" + data.mimeType + ";base64," + data.base64;
+  const content =
+    data.mimeType === "application/pdf"
+      ? [
+          { type: "text", text: instruction },
+          {
+            type: "file",
+            file: {
+              filename: data.fileName || "cv.pdf",
+              file_data: fileData,
+            },
+          },
+        ]
+      : [
+          { type: "text", text: instruction },
+          {
+            type: "image_url",
+            image_url: { url: fileData },
+          },
+        ];
+
+  const response = await fetchWithTimeout(
+    "https://openrouter.ai/api/v1/chat/completions",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + apiKey,
+        "HTTP-Referer": "https://mozaemprego.onrender.com",
+        "X-Title": "Moza Empregos CV",
+      },
+      body: JSON.stringify({
+        model: "openrouter/auto-beta",
+        messages: [{ role: "user", content }],
+        temperature: 0.1,
+        response_format: { type: "json_object" },
+      }),
+    },
+    REQUEST_TIMEOUT,
+  );
+
+  const body = (await response.json().catch(() => null)) as
+    | {
+        choices?: Array<{
+          message?: { content?: string | Array<{ text?: string }> };
+        }>;
+      }
+    | null;
+
+  const value = body?.choices?.[0]?.message?.content;
+  const raw =
+    typeof value === "string"
+      ? value
+      : Array.isArray(value)
+        ? value.map((part) => part.text ?? "").join("")
+        : "";
+
+  return { ok: response.ok, status: response.status, raw };
+}
+
+async function callGroq(
+  apiKey: string,
+  instruction: string,
+  data: ParseInput,
+) {
+  if (!data.mimeType.startsWith("image/")) {
+    return { ok: false, status: 415, raw: "" };
+  }
+
+  const response = await fetchWithTimeout(
+    "https://api.groq.com/openai/v1/chat/completions",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + apiKey,
+      },
+      body: JSON.stringify({
+        model: "qwen/qwen3.8-27b",
+        messages: [
+          {
+            role: "user",
+            content: [
+              { type: "text", text: instruction },
+              {
+                type: "image_url",
+                image_url: {
+                  url:
+                    "data:" + data.mimeType + ";base64," + data.base64,
+                },
+              },
+            ],
+          },
+        ],
+        temperature: 0.1,
+        response_format: { type: "json_object" },
+        max_completion_tokens: 2500,
+      }),
+    },
+    REQUEST_TIMEOUT,
+  );
+
+  const body = (await response.json().catch(() => null)) as
+    | {
+        choices?: Array<{ message?: { content?: string } }>;
+      }
+    | null;
+
+  return {
+    ok: response.ok,
+    status: response.status,
+    raw: body?.choices?.[0]?.message?.content ?? "",
+  };
+}
+
+async function tryProvider(
+  name: string,
+  call: () => Promise<{ ok: boolean; status: number; raw: string }>,
+) {
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      const result = await call();
+      console.log(
+        "CV AI " + name + ": tentativa " + attempt + ", status " + result.status,
+      );
+
+      if (result.ok) {
+        const normalized = normalizeCvJson(parseGeminiJson(result.raw));
+        if (normalized) return normalized;
+      }
+
+      if (![408, 409, 425, 429, 500, 502, 503, 504].includes(result.status)) {
+        break;
+      }
+    } catch (error) {
+      console.error("CV AI " + name + " erro:", error);
+    }
+
+    if (attempt < 2) await sleep(450);
+  }
+
+  return null;
+}
+
 export const parseCvFile = createServerFn({
   method: "POST",
 })
@@ -443,377 +592,110 @@ export const parseCvFile = createServerFn({
     return data;
   })
   .handler(async ({ data }) => {
-    const apiKey = process.env["GEMINI_API_KEY"];
-
-    if (!apiKey) {
-      console.error(
-        "GEMINI_API_KEY não configurada no servidor."
-      );
-
-      return {
-        ok: false as const,
-        error: "IA não configurada.",
-      };
-    }
-
-    const isImage = data.mimeType.startsWith("image/");
-
-    const isPdf =
-      data.mimeType === "application/pdf" ||
-      data.fileName.toLowerCase().endsWith(".pdf");
-
-    if (!isImage && !isPdf) {
-      return {
-        ok: false as const,
-        error:
-          "Formato não suportado. Envie o CV em PDF ou uma fotografia legível (JPG/PNG).",
-      };
-    }
-
-    /**
-     * Prompt mais rígido para reduzir respostas fora
-     * do formato esperado.
-     */
     const instruction =
-      "Analisa este currículo cuidadosamente e extrai apenas " +
-      "as informações que realmente aparecem no documento. " +
-      "Devolve APENAS um objecto JSON válido. " +
-      "Não escrevas Markdown. " +
-      "Não uses blocos ```json. " +
-      "Não escrevas explicações antes ou depois do JSON. " +
-      "Usa exactamente esta estrutura: " +
-      "{ " +
-      '"fullName": "", ' +
-      '"title": "", ' +
-      '"email": "", ' +
-      '"phone": "", ' +
-      '"location": "", ' +
-      '"summary": "", ' +
-      '"experiences": [{"role": "", "company": "", "period": "", "description": ""}], ' +
-      '"education": [{"course": "", "school": "", "period": ""}], ' +
-      '"skills": "", ' +
-      '"languages": "" ' +
-      "}. " +
-      "Usa português. " +
-      "Se uma informação não existir no currículo, deixa " +
-      "o campo vazio. " +
-      "Não inventes nomes, empresas, datas, cursos, " +
-      "competências ou outras informações. " +
-      "Mantém datas e nomes exactamente como aparecem " +
-      "quando forem legíveis.";
+      "Analisa este currículo e extrai somente informação realmente presente. " +
+      "Não inventes nomes, empresas, datas, cursos, competências ou idiomas. " +
+      "Responde APENAS JSON válido, sem Markdown, em português. " +
+      "Estrutura: " +
+      JSON.stringify({
+        fullName: "",
+        title: "",
+        email: "",
+        phone: "",
+        location: "",
+        summary: "",
+        experiences: [
+          {
+            role: "",
+            company: "",
+            period: "",
+            description: "",
+          },
+        ],
+        education: [
+          { course: "", school: "", period: "" },
+        ],
+        skills: "",
+        languages: "",
+      });
 
-    const parts: Array<Record<string, unknown>> = [
+    const geminiKey = process.env["GEMINI_API_KEY"];
+    const openRouterKey = process.env["OPENROUTER_API_KEY"];
+    const groqKey = process.env["GROQ_API_KEY"];
+
+    const providers: Array<{
+      name: string;
+      key: string | undefined;
+      run: (key: string) => Promise<ReturnType<typeof normalizeCvJson> | null>;
+    }> = [
       {
-        text: instruction,
+        name: "Gemini",
+        key: geminiKey,
+        run: async (key) => {
+          const models = await getAvailableModels(key);
+          const model = sortModels(models)[0] ?? "gemini-3.8-flash";
+          return tryProvider("Gemini", () => callGemini(key, model, [
+            { text: instruction },
+            {
+              inline_data: {
+                mime_type: data.mimeType,
+                data: data.base64,
+              },
+            },
+          ]));
+        },
+      },
+      {
+        name: "OpenRouter",
+        key: openRouterKey,
+        run: async (key) =>
+          tryProvider("OpenRouter", () =>
+            callOpenRouter(key, instruction, data),
+          ),
+      },
+      {
+        name: "Groq",
+        key: groqKey,
+        run: async (key) =>
+          tryProvider("Groq", () =>
+            callGroq(key, instruction, data),
+          ),
       },
     ];
 
-    /**
-     * Envia a imagem ou PDF directamente para o Gemini.
-     */
-    if (isImage) {
-      parts.push({
-        inline_data: {
-          mime_type: data.mimeType,
-          data: data.base64,
-        },
-      });
-    } else {
-      parts.push({
-        inline_data: {
-          mime_type: "application/pdf",
-          data: data.base64,
-        },
-      });
-    }
+    const configured = providers.filter((provider) => Boolean(provider.key));
 
-    /**
-     * Descobre os modelos disponíveis para esta API key.
-     */
-    const availableModels =
-      await getAvailableModels(apiKey);
-
-    console.log(
-      "Gemini models disponíveis:",
-      availableModels
-    );
-
-    if (availableModels.length === 0) {
+    if (!configured.length) {
+      console.error(
+        "Nenhuma IA configurada. Configure GEMINI_API_KEY, OPENROUTER_API_KEY ou GROQ_API_KEY.",
+      );
       return {
         ok: false as const,
-        error:
-          "A IA está temporariamente indisponível. Tente novamente.",
+        error: "O preenchimento automático está temporariamente indisponível.",
       };
     }
 
-    /**
-     * Ordena os modelos por preferência.
-     */
-    const modelsToTry = sortModels(
-      availableModels
-    );
+    for (const provider of configured) {
+      console.log("CV AI: a tentar " + provider.name + ".");
 
-    console.log(
-      "Gemini modelos que serão tentados:",
-      modelsToTry
-    );
+      const result = await provider.run(provider.key!);
 
-    /**
-     * Guarda o último erro apenas nos logs.
-     * Nunca é mostrado directamente ao utilizador.
-     */
-    let lastStatus: number | null = null;
-
-    /**
-     * Tenta os modelos sequencialmente.
-     *
-     * Exemplo:
-     *
-     * Gemini 3.8 → 503
-     * Gemini 3.7 → 503
-     * Gemini 3.6 → sucesso
-     *
-     * O utilizador recebe apenas o resultado final.
-     */
-    for (
-      let modelIndex = 0;
-      modelIndex < modelsToTry.length;
-      modelIndex++
-    ) {
-      const model = modelsToTry[modelIndex];
-
-      console.log(
-        `Gemini tentativa ${modelIndex + 1}/${modelsToTry.length}:`,
-        model
-      );
-
-      for (
-        let retry = 0;
-        retry <= MAX_RETRIES_PER_MODEL;
-        retry++
-      ) {
-        try {
-          /**
-           * Retry curto somente quando o erro é temporário.
-           */
-          if (retry > 0) {
-            await sleep(
-              RETRY_DELAY_MS * retry
-            );
-
-            console.log(
-              "Gemini retry:",
-              model,
-              retry
-            );
-          }
-
-          const result = await callGemini(
-            apiKey,
-            model,
-            parts
-          );
-
-          lastStatus = result.response.status;
-
-          console.log(
-            "Gemini status:",
-            result.response.status,
-            "modelo:",
-            model
-          );
-
-          /**
-           * Chave inválida ou sem autorização.
-           * Não adianta tentar outros modelos.
-           */
-          if (
-            result.response.status === 401 ||
-            result.response.status === 403
-          ) {
-            console.error(
-              "Gemini autorização falhou:",
-              result.response.status,
-              result.text
-            );
-
-            return {
-              ok: false as const,
-              error:
-                "A IA não está disponível neste momento.",
-            };
-          }
-
-          /**
-           * Pedido inválido.
-           * Outro modelo provavelmente receberia
-           * exactamente o mesmo pedido inválido.
-           */
-          if (result.response.status === 400) {
-            console.error(
-              "Gemini request inválido:",
-              result.text
-            );
-
-            return {
-              ok: false as const,
-              error:
-                "Não foi possível processar este ficheiro. Tente outro PDF ou uma fotografia mais nítida.",
-            };
-          }
-
-          /**
-           * Erros temporários.
-           *
-           * Se ainda houver retry, repete.
-           * Depois passa imediatamente para outro modelo.
-           */
-          if (
-            !result.response.ok &&
-            isTemporaryError(
-              result.response.status
-            )
-          ) {
-            console.warn(
-              "Gemini temporariamente indisponível:",
-              result.response.status,
-              "modelo:",
-              model
-            );
-
-            continue;
-          }
-
-          /**
-           * Outros erros HTTP.
-           * Tenta outro modelo, mas sem ficar preso
-           * repetindo indefinidamente.
-           */
-          if (!result.response.ok) {
-            console.error(
-              "Gemini CV parse failed:",
-              result.response.status,
-              result.text
-            );
-
-            break;
-          }
-
-          /**
-           * Extrai o texto da resposta.
-           */
-          const raw =
-            result.json?.candidates?.[0]?.content?.parts
-              ?.map((part) => part.text ?? "")
-              .join("") ?? "";
-
-          if (!raw) {
-            console.warn(
-              "Gemini não devolveu conteúdo:",
-              model
-            );
-
-            /**
-             * Se a resposta foi 200 mas vazia,
-             * tenta outro modelo.
-             */
-            break;
-          }
-
-          /**
-           * Converte a resposta para JSON.
-           */
-          const parsed = parseGeminiJson(raw);
-
-          if (!parsed) {
-            console.warn(
-              "Gemini devolveu JSON inválido:",
-              model
-            );
-
-            /**
-             * Uma segunda tentativa neste mesmo modelo
-             * pode resolver uma resposta malformada.
-             */
-            if (retry < MAX_RETRIES_PER_MODEL) {
-              continue;
-            }
-
-            break;
-          }
-
-          /**
-           * Normaliza os campos para garantir compatibilidade
-           * com o editor de CV.
-           */
-          const normalized =
-            normalizeCvJson(parsed);
-
-          if (!normalized) {
-            console.warn(
-              "Gemini JSON incompatível:",
-              model
-            );
-
-            break;
-          }
-
-          console.log(
-            "Gemini CV parse concluído com sucesso:",
-            model
-          );
-
-          return {
-            ok: true as const,
-            cvJson: JSON.stringify(
-              normalized
-            ),
-          };
-        } catch (error) {
-          console.error(
-            "Gemini request error:",
-            model,
-            error
-          );
-
-          /**
-           * Timeout ou erro de rede:
-           * tenta o próximo modelo.
-           */
-          if (
-            error instanceof Error &&
-            error.name === "AbortError"
-          ) {
-            console.warn(
-              "Gemini timeout:",
-              model
-            );
-
-            break;
-          }
-
-          /**
-           * Não deixa uma falha de rede interromper
-           * toda a cadeia de fallback.
-           */
-          break;
-        }
+      if (result) {
+        console.log("CV AI: sucesso com " + provider.name + ".");
+        return {
+          ok: true as const,
+          cvJson: JSON.stringify(result),
+        };
       }
+
+      console.warn(
+        "CV AI: " + provider.name + " falhou; a passar para o próximo.",
+      );
     }
 
-    console.error(
-      "Todos os modelos Gemini falharam.",
-      "Último status:",
-      lastStatus
-    );
-
-    /**
-     * Mensagem limpa para o utilizador.
-     * Os detalhes ficam apenas nos logs do Render.
-     */
     return {
       ok: false as const,
       error:
-        "A IA está temporariamente indisponível. Tente novamente.",
+        "Não foi possível preencher o CV agora. Tente novamente em alguns segundos.",
     };
   });
