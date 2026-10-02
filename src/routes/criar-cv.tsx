@@ -311,6 +311,42 @@ function CriarCvPage() {
               </span>
             </div>
 
+            <div className="mt-3 flex items-center justify-between gap-3 rounded-xl border border-dashed border-border bg-muted/20 px-3 py-2">
+              <div className="flex min-w-0 items-center gap-2">
+                <Upload className="h-4 w-4 shrink-0 text-primary" />
+                <div className="min-w-0">
+                  <p className="truncate text-xs font-bold">Já tem um CV?</p>
+                  <p className="hidden text-[10px] text-muted-foreground sm:block">Carregue PDF ou imagem e preenchemos por si.</p>
+                </div>
+              </div>
+              <input
+                ref={cvInput}
+                type="file"
+                accept="application/pdf,image/*"
+                className="hidden"
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  if (file) void onCvFile(file);
+                  event.target.value = "";
+                }}
+              />
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={aiState.loading}
+                onClick={() => cvInput.current?.click()}
+                className="h-8 shrink-0 gap-1.5 px-3 text-[11px]"
+              >
+                {aiState.loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                {aiState.loading ? "A analisar..." : "Carregar CV antigo"}
+              </Button>
+            </div>
+            {aiState.message ? (
+              <p className="mt-2 text-[11px] text-muted-foreground" role="status">
+                {aiState.message}
+              </p>
+            ) : null}
+
             <div className="relative mt-5">
               <button
                 type="button"
@@ -453,41 +489,6 @@ function CriarCvPage() {
               </Button>
             </div>
 
-            <div className="mt-3 flex items-center justify-between gap-3 rounded-xl border border-dashed border-border bg-muted/20 px-3 py-2">
-              <div className="flex min-w-0 items-center gap-2">
-                <Upload className="h-4 w-4 shrink-0 text-primary" />
-                <div className="min-w-0">
-                  <p className="truncate text-xs font-bold">Já tem um CV?</p>
-                  <p className="hidden text-[10px] text-muted-foreground sm:block">Carregue PDF ou imagem e preenchemos por si.</p>
-                </div>
-              </div>
-              <input
-                ref={cvInput}
-                type="file"
-                accept="application/pdf,image/*"
-                className="hidden"
-                onChange={(event) => {
-                  const file = event.target.files?.[0];
-                  if (file) void onCvFile(file);
-                  event.target.value = "";
-                }}
-              />
-              <Button
-                size="sm"
-                variant="outline"
-                disabled={aiState.loading}
-                onClick={() => cvInput.current?.click()}
-                className="h-8 shrink-0 gap-1.5 px-3 text-[11px]"
-              >
-                {aiState.loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-                {aiState.loading ? "A analisar..." : "Carregar CV antigo"}
-              </Button>
-            </div>
-            {aiState.message ? (
-              <p className="mt-2 text-[11px] text-muted-foreground" role="status">
-                {aiState.message}
-              </p>
-            ) : null}
           </section>
         ) : (
           <section className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,0.9fr)_minmax(390px,1.1fr)]">
