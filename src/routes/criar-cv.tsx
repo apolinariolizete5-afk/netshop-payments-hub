@@ -86,6 +86,17 @@ function templateCategory(
   templateId: string,
 ): string {
   const categories: Record<string, string> = {
+    "template-01": "Elegante",
+    "template-02": "Executivo",
+    "template-03": "Corporativo",
+    "template-04": "Design",
+    "template-05": "Minimalista",
+    "template-06": "Carreira",
+    "template-07": "Executivo Premium",
+    "template-08": "Corporativo",
+    "template-09": "Primeiro emprego",
+    "template-10": "Académico",
+    "template-11": "Criativo",
     editorial: "Elegante",
     executive: "Executivo",
     corporate: "Corporativo",
