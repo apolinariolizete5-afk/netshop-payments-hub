@@ -117,7 +117,7 @@ export const getCvPrice = createServerFn({
       .maybeSingle();
 
   const price = Number(
-    data?.value ?? 75,
+    data?.value ?? 150,
   );
 
   return {
@@ -125,7 +125,7 @@ export const getCvPrice = createServerFn({
       Number.isFinite(price) &&
       price > 0
         ? price
-        : 75,
+        : 150,
   };
 });
 
