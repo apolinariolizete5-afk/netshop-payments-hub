@@ -158,7 +158,7 @@ export const SAMPLE_CV: CvData = {
 export const CV_TEMPLATES: CvTemplate[] = [
   {
     id: "template-01",
-    name: "Modelo 1",
+    name: "Modelo 1 — Editorial",
     description: "Modelo profissional com coluna lateral e apresentação clara da carreira.",
     layout: "editorial",
     accent: "#111827",
@@ -169,7 +169,7 @@ export const CV_TEMPLATES: CvTemplate[] = [
   },
   {
     id: "template-02",
-    name: "Modelo 2",
+    name: "Modelo 2 — Executivo",
     description: "Modelo executivo com destaque visual para perfil e contactos.",
     layout: "executive",
     accent: "#172033",
@@ -180,7 +180,7 @@ export const CV_TEMPLATES: CvTemplate[] = [
   },
   {
     id: "template-03",
-    name: "Modelo 3",
+    name: "Modelo 3 — Editorial Corporativo",
     description: "Modelo corporativo equilibrado para candidaturas profissionais.",
     layout: "corporate",
     accent: "#1E3A5F",
@@ -191,7 +191,7 @@ export const CV_TEMPLATES: CvTemplate[] = [
   },
   {
     id: "template-04",
-    name: "Modelo 4",
+    name: "Modelo 4 — Swiss",
     description: "Modelo visual com estrutura rigorosa e leitura rápida.",
     layout: "swiss",
     accent: "#5D7485",
@@ -202,7 +202,7 @@ export const CV_TEMPLATES: CvTemplate[] = [
   },
   {
     id: "template-05",
-    name: "Modelo 5",
+    name: "Modelo 5 — Minimal",
     description: "Modelo elegante de alto contraste para perfis profissionais.",
     layout: "minimal",
     accent: "#A58C62",
@@ -213,7 +213,7 @@ export const CV_TEMPLATES: CvTemplate[] = [
   },
   {
     id: "template-06",
-    name: "Modelo 6",
+    name: "Modelo 6 — Timeline",
     description: "Modelo cronológico para destacar a evolução da carreira.",
     layout: "timeline",
     accent: "#4F46E5",
@@ -224,7 +224,7 @@ export const CV_TEMPLATES: CvTemplate[] = [
   },
   {
     id: "template-07",
-    name: "Executive Gold",
+    name: "Modelo 7 — Executive Gold",
     description: "Executivo premium com coluna escura, detalhes dourados e hierarquia editorial.",
     layout: "creative",
     accent: "#B08A45",
@@ -235,7 +235,7 @@ export const CV_TEMPLATES: CvTemplate[] = [
   },
   {
     id: "template-08",
-    name: "Wave Blue",
+    name: "Modelo 8 — Wave Blue",
     description: "Design contemporâneo com ondas, azul corporativo e composição dinâmica.",
     layout: "tech",
     accent: "#2F5878",
@@ -246,7 +246,7 @@ export const CV_TEMPLATES: CvTemplate[] = [
   },
   {
     id: "template-09",
-    name: "Bold Start",
+    name: "Modelo 9 — Bold Start",
     description: "Modelo de alto impacto para primeiro emprego, estágio e perfis em início de carreira.",
     layout: "first-job",
     accent: "#4A4A4A",
@@ -257,7 +257,7 @@ export const CV_TEMPLATES: CvTemplate[] = [
   },
   {
     id: "template-10",
-    name: "Classic Profile",
+    name: "Modelo 10 — Classic Profile",
     description: "Visual clássico e editorial com coluna lateral cinza e tipografia elegante.",
     layout: "academic",
     accent: "#222222",
@@ -268,7 +268,7 @@ export const CV_TEMPLATES: CvTemplate[] = [
   },
   {
     id: "template-11",
-    name: "Slate Creative",
+    name: "Modelo 11 — Slate Creative",
     description: "Portfólio moderno com fundo azul-ardósia e blocos de destaque em creme.",
     layout: "portfolio",
     accent: "#61788A",
@@ -279,7 +279,7 @@ export const CV_TEMPLATES: CvTemplate[] = [
   },
   {
     id: "template-12",
-    name: "Finance Pro",
+    name: "Modelo 12 — Finance Pro",
     description: "Estrutura executiva financeira com cabeçalho sólido, coluna de contacto e detalhes dourados.",
     layout: "finance",
     accent: "#B08A45",
@@ -290,7 +290,7 @@ export const CV_TEMPLATES: CvTemplate[] = [
   },
   {
     id: "template-13",
-    name: "Impacto",
+    name: "Modelo 13 — Impacto",
     description: "Layout contemporâneo para ONG, desenvolvimento e projectos sociais, com faixa verde e leitura limpa.",
     layout: "development",
     accent: "#2F6B57",
@@ -301,7 +301,7 @@ export const CV_TEMPLATES: CvTemplate[] = [
   },
   {
     id: "template-14",
-    name: "ATS Clean",
+    name: "Modelo 14 — ATS Clean",
     description: "Modelo de leitura directa, sem elementos decorativos desnecessários, optimizado para recrutamento.",
     layout: "ats",
     accent: "#111827",
@@ -312,7 +312,7 @@ export const CV_TEMPLATES: CvTemplate[] = [
   },
   {
     id: "template-15",
-    name: "Moçambique",
+    name: "Modelo 15 — Moçambique",
     description: "Identidade visual moçambicana discreta, profissional e adequada a candidaturas locais.",
     layout: "mozambique",
     accent: "#006B4F",
