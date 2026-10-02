@@ -200,4 +200,17 @@
     padding: 0;
     max-width: none;
   }
+
+  #cv-print-area [data-cv-page] {
+    width: 210mm !important;
+    max-width: 210mm !important;
+    min-height: 0 !important;
+    height: auto !important;
+    margin: 0;
+  }
+
+  @page {
+    size: A4;
+    margin: 0;
+  }
 }
