@@ -1268,7 +1268,7 @@ function TemplateZoom({
 
         <div className="min-h-0 flex-1 overflow-auto bg-muted/40 p-4 sm:p-8">
           <div className="mx-auto w-fit origin-top scale-[0.52] sm:scale-[0.7] md:scale-[0.82] lg:scale-100">
-            <CvPreview data={galleryPreview} template={template} />
+            <CvPreview data={galleryPreview} template={template} fullPage />
           </div>
         </div>
 
