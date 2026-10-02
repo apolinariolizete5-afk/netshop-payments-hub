@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from "react";
+import { useEffect, useRef, useState, type Dispatch, type RefObject, type SetStateAction } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import {
@@ -673,7 +673,7 @@ function BasicInfo({
 }: {
   data: CvData;
   setData: Dispatch<SetStateAction<CvData>>;
-  photoInput: React.RefObject<HTMLInputElement | null>;
+  photoInput: RefObject<HTMLInputElement | null>;
   onPhoto: (file: File) => Promise<void>;
 }) {
   return (
