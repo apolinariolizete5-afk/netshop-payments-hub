@@ -77,7 +77,7 @@ function templateCategory(templateId: string) {
     "template-05": "Minimalista",
     "template-06": "Carreira",
     "template-07": "Executivo Premium",
-    "template-08": "Corporativo",
+    "template-08": "Tecnologia",
     "template-09": "Primeiro emprego",
     "template-10": "Académico",
     "template-11": "Criativo",
