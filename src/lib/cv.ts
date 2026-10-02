@@ -88,7 +88,7 @@ export const EMPTY_CV: CvData = {
   customSections: [],
   skills: "",
   languages: "",
-  templateId: "editorial",
+  templateId: "template-01",
 };
 
 export const SAMPLE_CV: CvData = {
