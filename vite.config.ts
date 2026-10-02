@@ -12,8 +12,16 @@ export default defineConfig({
   // a fetch-only bundle that exits immediately when started with Node.
   nitro: { preset: "render-com" },
   tanstackStart: {
-    // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
-    // nitro/vite builds from this
+    // Run the application as a client-rendered SPA so Render never waits
+    // for a route SSR stream. Server functions still run through the Node server.
+    spa: {
+      enabled: true,
+      prerender: {
+        crawlLinks: false,
+        retryCount: 0,
+      },
+    },
+    // Keep the custom Node server entry for server functions and API behavior.
     server: { entry: "server" },
   },
 });
