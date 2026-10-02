@@ -62,9 +62,8 @@ export const Route = createFileRoute("/criar-cv")({
 
 const STEPS = [
   "Modelo",
-  "Informações",
-  "Experiência",
-  "Formação",
+  "Dados",
+  "Carreira",
   "Finalizar",
 ] as const;
 
@@ -505,14 +504,10 @@ function CriarCvPage() {
                 ) : null}
 
                 {step === 2 ? (
-                  <ExperienceStep data={data} setData={setData} />
+                  <CareerStep data={data} setData={setData} />
                 ) : null}
 
                 {step === 3 ? (
-                  <EducationStep data={data} setData={setData} />
-                ) : null}
-
-                {step === 4 ? (
                   <FinalStep data={data} setData={setData} />
                 ) : null}
 
@@ -795,6 +790,23 @@ function BasicInfo({
   );
 }
 
+function CareerStep({
+  data,
+  setData,
+}: {
+  data: CvData;
+  setData: Dispatch<SetStateAction<CvData>>;
+}) {
+  return (
+    <div className="space-y-10">
+      <ExperienceStep data={data} setData={setData} />
+      <div className="border-t border-border pt-8">
+        <EducationStep data={data} setData={setData} />
+      </div>
+    </div>
+  );
+}
+
 function ExperienceStep({
   data,
   setData,
@@ -826,9 +838,9 @@ function ExperienceStep({
   return (
     <div>
       <StepTitle
-        eyebrow="Passo 2"
+        eyebrow="Carreira"
         title="Tem experiência profissional?"
-        description="Adicione uma ou quantas experiências quiser. Se ainda não trabalhou, pode saltar."
+        description="Adicione apenas o que tiver. Se ainda não trabalhou, avance sem preencher."
       />
 
       {!started ? (
@@ -959,9 +971,9 @@ function EducationStep({
   return (
     <div>
       <StepTitle
-        eyebrow="Passo 3"
+        eyebrow="Carreira"
         title="Onde estudou?"
-        description="Adicione a sua formação. Pode adicionar mais de uma."
+        description="Adicione a sua formação. Também pode deixar vazio e continuar."
       />
 
       {!started ? (
@@ -1059,7 +1071,7 @@ function FinalStep({
   return (
     <div>
       <StepTitle
-        eyebrow="Passo 4"
+        eyebrow="Finalizar"
         title="Só falta o essencial"
         description="Adicione competências e idiomas. O resto é opcional."
       />
