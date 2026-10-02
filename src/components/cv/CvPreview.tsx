@@ -1124,7 +1124,7 @@ function Template07({ data, id }: { data: CvData; id?: string }) {
         </aside>
         <main style={{ padding: "16mm 12mm" }}>
           <h1 style={{ margin: 0, fontFamily: "Georgia, Times New Roman, serif", fontSize: 27, lineHeight: 1.05, color: gold, letterSpacing: 1 }}>{data.fullName || "O SEU NOME"}</h1>
-          <div style={{ marginTop: 7, fontSize: 10, letterSpacing: 2.2, textTransform: "uppercase", color: "#333333" }}>{data.title || "CONSULTOR ESTRATÉGICO | EXECUTIVO SÉNIOR"}</div>
+          <div style={{ marginTop: 7, fontSize: 10, letterSpacing: 2.2, textTransform: "uppercase", color: "#333333" }}>{data.title || "TÍTULO PROFISSIONAL"}</div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, margin: "15px 0 20px" }}><div style={{ height: 1, background: gold }} /><div style={{ height: 1, background: gold }} /></div>
           {data.summary && <Section title="Perfil Executivo" color={gold}><div style={{ fontSize: 10.2, lineHeight: 1.65, whiteSpace: "pre-line" }}>{data.summary}</div></Section>}
           <Section title="Principais resultados" color={gold}><Experience data={data} accent={gold} /></Section>
@@ -1150,7 +1150,7 @@ function Template08({ data, id }: { data: CvData; id?: string }) {
             <div style={{ display: "flex", justifyContent: "center", paddingTop: "8mm" }}><div style={{ border: "5px solid " + blue, borderRadius: "50%", padding: 3, background: "#FFFFFF" }}><Photo src={data.photo} circle /></div></div>
             <div style={{ paddingTop: "7mm" }}>
               <h1 style={{ margin: 0, fontSize: 27, lineHeight: 1, color: blue, fontWeight: 800, letterSpacing: .4 }}>{data.fullName || "O SEU NOME"}</h1>
-              <div style={{ marginTop: 7, color: cyan, fontSize: 11, fontWeight: 700, letterSpacing: 3, textTransform: "uppercase" }}>{data.title || "ENGENHEIRO DE SOFTWARE"}</div>
+              <div style={{ marginTop: 7, color: cyan, fontSize: 11, fontWeight: 700, letterSpacing: 3, textTransform: "uppercase" }}>{data.title || "TÍTULO PROFISSIONAL"}</div>
               <div style={{ marginTop: 12 }}><Contact data={data} /></div>
             </div>
           </div>
@@ -1184,13 +1184,13 @@ function Template09({ data, id }: { data: CvData; id?: string }) {
         <aside style={{ background: gray, color: "#FFFFFF", padding: "12mm 10mm" }}>
           <Photo src={data.photo} />
           {data.summary && <div style={{ marginTop: 18 }}><Section title="Sobre mim" color="#FFFFFF"><div style={{ fontSize: 10.3, lineHeight: 1.65, whiteSpace: "pre-line" }}>{data.summary}</div></Section></div>}
-          <Section title="Interesses pessoais" color="#FFFFFF"><Skills data={{ ...data, skills: data.skills || "Desenvolvimento profissional, Inovação e tecnologia, Trabalho em equipa e colaboração" }} light /></Section>
+          <Section title="Interesses pessoais" color="#FFFFFF"><Skills data={data} light /></Section>
           <Section title="Idiomas" color="#FFFFFF"><Languages data={data} light /></Section>
           <Section title="Contacto" color="#FFFFFF"><Contact data={data} light /></Section>
         </aside>
         <main style={{ padding: "16mm 11mm" }}>
           <h1 style={{ margin: 0, fontFamily: "Arial Narrow, Impact, sans-serif", fontSize: 34, lineHeight: .98, letterSpacing: -.5, textTransform: "uppercase", color: "#333333" }}>{data.fullName || "O SEU NOME"}</h1>
-          <div style={{ marginTop: 10, fontSize: 13, color: "#555555" }}>{data.title || "Estagiário Administrativo"}</div>
+          <div style={{ marginTop: 10, fontSize: 13, color: "#555555" }}>{data.title || "TÍTULO PROFISSIONAL"}</div>
           <div style={{ width: 55, height: 3, background: gray, margin: "16px 0 22px" }} />
           <Section title="Formação Académica" color={gray}><Education data={data} accent={gray} /></Section>
           <Section title="Experiência Profissional" color={gray}><Experience data={data} accent={gray} /></Section>
@@ -1220,7 +1220,7 @@ function Template10({ data, id }: { data: CvData; id?: string }) {
         </aside>
         <main style={{ padding: "18mm 11mm" }}>
           <h1 style={{ margin: 0, fontFamily: "Georgia, Times New Roman, serif", fontSize: 27, lineHeight: 1.05, letterSpacing: 1.2, textTransform: "uppercase" }}>{data.fullName || "O SEU NOME"}</h1>
-          <div style={{ marginTop: 8, fontFamily: "Georgia, Times New Roman, serif", fontSize: 13, fontStyle: "italic", color: "#555555" }}>{data.title || "Estudante"}</div>
+          <div style={{ marginTop: 8, fontFamily: "Georgia, Times New Roman, serif", fontSize: 13, fontStyle: "italic", color: "#555555" }}>{data.title || "TÍTULO PROFISSIONAL"}</div>
           <div style={{ marginTop: 24 }}>
             <Section title="Experiência de Trabalho"><Experience data={data} /></Section>
             <Section title="Estudos"><Education data={data} /></Section>
@@ -1254,7 +1254,7 @@ function Template11({ data, id }: { data: CvData; id?: string }) {
           <div style={{ marginBottom: 18 }}><Contact data={data} light /></div>
           <Section title="Experiência Profissional" color={cream}><div style={{ background: cream, color: slate, padding: "7px 11px", fontSize: 11, fontWeight: 800, letterSpacing: 1.2, textTransform: "uppercase", marginBottom: 13 }}>Experiência profissional</div><Experience data={data} light accent={cream} /></Section>
           <Section title="Formação Académica" color={cream}><div style={{ background: cream, color: slate, padding: "7px 11px", fontSize: 11, fontWeight: 800, letterSpacing: 1.2, textTransform: "uppercase", marginBottom: 13 }}>Percurso académico</div><Education data={data} light accent={cream} /></Section>
-          <Section title="Interesses principais" color={cream}><div style={{ background: cream, color: slate, padding: "7px 11px", fontSize: 11, fontWeight: 800, letterSpacing: 1.2, textTransform: "uppercase", marginBottom: 13 }}>Interesses principais</div><Skills data={{ ...data, skills: data.skills || "Jornalismo, Tecnologia, Arte, Música, História, Arquitetura" }} light /></Section>
+          <Section title="Interesses principais" color={cream}><div style={{ background: cream, color: slate, padding: "7px 11px", fontSize: 11, fontWeight: 800, letterSpacing: 1.2, textTransform: "uppercase", marginBottom: 13 }}>Interesses principais</div><Skills data={data} light /></Section>
           <CustomSections data={data} accent={cream} />
         </main>
       </div>
