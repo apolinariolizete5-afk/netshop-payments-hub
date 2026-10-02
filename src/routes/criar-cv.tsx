@@ -784,6 +784,20 @@ function BasicInfo({
             value={data.summary}
             onChange={(event) => setData((prev) => ({ ...prev, summary: event.target.value }))}
           />
+          <SuggestionChips
+            label="Frases rápidas"
+            values={[
+              "Profissional responsável e organizado.",
+              "Boa capacidade de comunicação e trabalho em equipa.",
+              "Procuro uma oportunidade para crescer e contribuir.",
+            ]}
+            onAdd={(phrase) =>
+              setData((prev) => ({
+                ...prev,
+                summary: appendPhrase(prev.summary, phrase),
+              }))
+            }
+          />
         </div>
       </div>
     </div>
@@ -911,6 +925,20 @@ function ExperienceStep({
                     value={item.description}
                     onChange={(event) =>
                       updateExperience(setData, index, { description: event.target.value })
+                    }
+                  />
+                  <SuggestionChips
+                    label="Pode adicionar"
+                    values={[
+                      "Atendimento ao cliente",
+                      "Organização de documentos",
+                      "Apoio à equipa",
+                      "Gestão de tarefas",
+                    ]}
+                    onAdd={(phrase) =>
+                      updateExperience(setData, index, {
+                        description: appendPhrase(item.description, phrase),
+                      })
                     }
                   />
                 </div>
@@ -1088,8 +1116,25 @@ function FinalStep({
             onChange={(event) => setData((prev) => ({ ...prev, skills: event.target.value }))}
           />
           <p className="mt-1 text-xs text-muted-foreground">
-            Separe por vírgulas ou escreva uma por linha.
+            Separe por vírgulas ou toque nas sugestões abaixo.
           </p>
+          <SuggestionChips
+            label="Competências rápidas"
+            values={[
+              "Comunicação",
+              "Trabalho em equipa",
+              "Atendimento ao cliente",
+              "Microsoft Office",
+              "Organização",
+              "Pontualidade",
+            ]}
+            onAdd={(skill) =>
+              setData((prev) => ({
+                ...prev,
+                skills: appendPhrase(prev.skills, skill),
+              }))
+            }
+          />
         </div>
 
         <div>
@@ -1192,6 +1237,47 @@ function FinalStep({
             </div>
           ) : null}
         </div>
+      </div>
+    </div>
+  );
+}
+
+function appendPhrase(current: string, phrase: string) {
+  const parts = current
+    .split(/[,\n]/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+  if (parts.some((item) => item.toLowerCase() === phrase.toLowerCase())) {
+    return current;
+  }
+
+  return parts.length ? parts.join(", ") + ", " + phrase : phrase;
+}
+
+function SuggestionChips({
+  label,
+  values,
+  onAdd,
+}: {
+  label: string;
+  values: string[];
+  onAdd: (value: string) => void;
+}) {
+  return (
+    <div className="mt-2">
+      <p className="mb-1.5 text-[11px] font-bold text-muted-foreground">{label}</p>
+      <div className="flex flex-wrap gap-1.5">
+        {values.map((value) => (
+          <button
+            key={value}
+            type="button"
+            onClick={() => onAdd(value)}
+            className="rounded-full border border-border bg-background px-2.5 py-1 text-[11px] font-semibold transition hover:border-primary/50 hover:bg-primary/5"
+          >
+            + {value}
+          </button>
+        ))}
       </div>
     </div>
   );
