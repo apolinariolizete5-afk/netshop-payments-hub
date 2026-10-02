@@ -237,23 +237,25 @@ function CriarCvPage() {
   }
 
   return (
-    <AppShell>
-      <main className="mx-auto w-full max-w-7xl px-1 pb-10 print:px-0">
-        <section className="relative overflow-hidden rounded-[28px] bg-primary px-5 py-7 text-primary-foreground shadow-sm print:hidden sm:px-8 sm:py-8">
-          <div className="relative z-10 max-w-2xl">
-            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] opacity-80">
-              <Sparkles className="h-4 w-4" />
-              Moza Empregos
+    <AppShell compactFooter>
+      <main className="mx-auto w-full max-w-7xl px-1 pb-6 print:px-0">
+        <section className="relative overflow-hidden rounded-2xl bg-primary px-4 py-3 text-primary-foreground shadow-sm print:hidden sm:px-5">
+          <div className="relative z-10 flex items-center justify-between gap-3">
+            <div className="flex min-w-0 items-center gap-2.5">
+              <Sparkles className="h-4 w-4 shrink-0 opacity-90" />
+              <div className="min-w-0">
+                <p className="truncate text-sm font-black sm:text-base">
+                  Criação de CV profissional com um clique
+                </p>
+                <p className="hidden text-[11px] opacity-80 sm:block">
+                  Simples, rápido e profissional.
+                </p>
+              </div>
             </div>
-            <h1 className="mt-2 text-3xl font-black tracking-tight sm:text-4xl">
-              Crie o seu CV sem complicação.
-            </h1>
-            <p className="mt-2 text-sm leading-6 opacity-90 sm:text-base">
-              Escolha um modelo, responda a perguntas simples e veja o seu CV a ganhar forma.
-            </p>
+            <span className="hidden shrink-0 rounded-full bg-white/10 px-2.5 py-1 text-[10px] font-bold sm:inline-flex">
+              Moza Empregos
+            </span>
           </div>
-          <div aria-hidden className="absolute -right-12 -top-16 h-44 w-44 rounded-full bg-white/10" />
-          <div aria-hidden className="absolute -bottom-24 right-20 h-48 w-48 rounded-full bg-black/10" />
         </section>
 
         <div className="mt-5 print:hidden">
@@ -451,17 +453,14 @@ function CriarCvPage() {
               </Button>
             </div>
 
-            <div className="mt-5 rounded-2xl border border-dashed border-border bg-muted/30 p-4">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex items-start gap-3">
-                  <Sparkles className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-                  <div>
-                    <p className="text-sm font-black">Já tem um CV?</p>
-                    <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                      Envie PDF ou imagem e podemos preencher os campos para si. Depois reveja tudo antes de continuar.
-                    </p>
-                  </div>
+            <div className="mt-3 flex items-center justify-between gap-3 rounded-xl border border-dashed border-border bg-muted/20 px-3 py-2">
+              <div className="flex min-w-0 items-center gap-2">
+                <Upload className="h-4 w-4 shrink-0 text-primary" />
+                <div className="min-w-0">
+                  <p className="truncate text-xs font-bold">Já tem um CV?</p>
+                  <p className="hidden text-[10px] text-muted-foreground sm:block">Carregue PDF ou imagem e preenchemos por si.</p>
                 </div>
+              </div>
                 <input
                   ref={cvInput}
                   type="file"
@@ -484,7 +483,7 @@ function CriarCvPage() {
                 </Button>
               </div>
               {aiState.message ? (
-                <p className="mt-3 text-xs text-muted-foreground" role="status">
+                <p className="mt-2 text-[11px] text-muted-foreground" role="status">
                   {aiState.message}
                 </p>
               ) : null}
